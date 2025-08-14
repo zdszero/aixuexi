@@ -1,0 +1,73 @@
+<div class="td-max-width-on-larger-screens">
+  <button class="solution-btn" onclick="toggleSolutionDetail(this)">查看答案与解析</button>
+</div>
+<div class="solution-detail td-max-width-on-larger-screens" style="display: none;">
+  {{ .Inner | markdownify | safeHTML }}
+</div>
+
+{{- if not ($.Page.Scratch.Get "quiz-solution-flag") -}}
+{{- $.Page.Scratch.Set "quiz-solution-flag" true -}}
+<style>
+.solution-btn {
+  /* Reset button-specific visual styles */
+  background-color: transparent;
+  border: none;
+  border-radius: 0; /* Links typically don't have rounded corners */
+  padding: 2px 4px; /* Minimal padding, similar to a link's natural spacing */
+  box-shadow: none; /* Ensure no shadow from previous styles */
+
+  /* Link-like styling */
+  color: #6c757d; /* A standard subtle grey color */
+  font-size: 14px; /* Common link size */
+  font-weight: normal; /* Standard weight for link text */
+  text-decoration: none; /* No underline by default */
+  
+  /* Center the button */
+  display: flex; /* Ensure the button itself is a flex container */
+  justify-content: center; /* Center content horizontally */
+  align-items: center; /* Center content vertically */
+  margin: 0 auto; /* Center the button horizontally in its parent */
+  align-self: center; /* Override flex-start to center in flex container */
+  text-align: center; /* Center the text within the button */
+
+  /* Smooth transition for color change */
+  transition: color 0.2s ease-in-out;
+}
+
+.solution-btn:hover,
+.solution-btn:focus {
+  color: #343a40; /* Darken on hover/focus */
+  text-decoration: underline; /* Add underline on hover/focus */
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.solution-detail {
+  display: none;
+  background-color: #e9f5ff;
+  padding: 15px;
+  border-radius: 6px;
+  font-size: 1em;
+  line-height: 1.6;
+  border: 1px solid #b3d7ff;
+  color: #333;
+}
+
+.solution-detail strong {
+  color: #0056b3;
+  font-weight: 600;
+}
+</style>
+
+<script>
+function toggleSolutionDetail(button) {
+  const explanationDiv = button.parentNode.nextElementSibling;
+  if (explanationDiv.style.display === "none") {
+    explanationDiv.style.display = "block";
+  } else {
+    explanationDiv.style.display = "none";
+  }
+}
+</script>
+{{- end -}}

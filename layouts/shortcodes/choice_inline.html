@@ -1,0 +1,86 @@
+{{ $labels := slice "A" "B" "C" "D" }}
+{{ $lines := split .Inner "\n" }}
+{{ $answer := "" }}
+{{ $explanation := "" }}
+{{ $choiceID := printf "choice-%d" (now.UnixNano) }}
+
+{{ range $index, $line := $lines }}
+  {{ $trimmed := trim $line " \r" }}
+  {{ if eq $index 1 }}
+    {{ $answer = $trimmed }}
+  {{ else if gt $index 1 }}
+    {{ $explanation = print $explanation "\n" $line }}
+  {{ end }}
+{{ end }}
+
+{{ $.Scratch.Set $choiceID $answer }}
+
+<div class="choice-container td-max-width-on-larger-screens" data-answer="{{ $answer }}" id="quiz-{{ $choiceID }}">
+  <form class="choice-inline">
+    {{ range $index, $label := $labels }}
+    <label class="choice-option-inline">
+      <input type="radio" name="{{ $choiceID }}" value="{{ $label }}" onclick="checkAnswer(this, '{{ $choiceID }}', '{{ $answer }}')">
+      <span class="choice-label">{{ $label }}</span>
+    </label>
+    {{ end }}
+  </form>
+
+  <div class="feedback-area" id="feedback-{{ $choiceID }}"></div>
+
+  <button class="toggle-btn" onclick="toggleExplanation(this, '{{ $choiceID }}')">查看答案与解析</button>
+  <div class="explanation" id="explanation-{{ $choiceID }}">
+    <strong>正确答案：<span class="correct-answer-text">{{ $answer }}</span></strong><br>
+    {{ $explanation | markdownify | safeHTML }}
+  </div>
+</div>
+
+{{ if not ($.Page.Scratch.Get "quiz-choice-inline-flag") }}
+<style>
+  .choice-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+    justify-content: flex-start; /* 关键：靠左排列 */
+  }
+
+  .choice-option-inline {
+    flex: 1 1 calc(25% - 10px); /* 每行 4 个 */
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* 关键：内容靠左对齐 */
+    padding: 10px 14px;
+    border: 1px solid #d1d1d1;
+    border-radius: 6px;
+    background-color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+    text-align: left;
+  }
+
+  .choice-option-inline:hover {
+    background-color: #f0f7ff;
+    border-color: #80bfff;
+    transform: translateY(-1px);
+  }
+
+  .choice-option-inline input[type="radio"] {
+    margin-right: 10px;
+    transform: scale(1.1);
+    accent-color: #007bff;
+  }
+
+  .choice-label {
+    font-weight: bold;
+    color: #007bff;
+  }
+
+  @media (max-width: 600px) {
+    .choice-option-inline {
+      flex: 1 1 100%;
+    }
+  }
+</style>
+{{ $.Page.Scratch.Set "quiz-choice-inline-flag" true }}
+{{ end }}

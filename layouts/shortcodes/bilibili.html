@@ -1,0 +1,102 @@
+<style>
+.dropdown-content {
+  position: relative;
+  height: 0;
+  max-width: 75%;
+  padding-bottom: 56.25%; /* Adjusted for 16:9 aspect ratio, use 75% for 4:3 */
+  margin-top: 10px;
+  margin-bottom: 10px;
+  display: none;
+}
+
+.dropdown-content iframe {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.dropdown {
+  margin: 10px 0;
+}
+
+.dropdown button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  width: 60%;
+}
+
+.dropdown button:hover {
+  background-color: #0056b3;
+}
+
+.icon {
+  margin-right: 10px;
+}
+
+@media only screen and (max-device-width: 768px) {
+  .dropdown button {
+    max-width: 100%;
+    width: 100%;
+  }
+  .dropdown-content {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+</style>
+
+<div class="dropdown">
+  <button onclick="toggleDropdown({{ index .Params 1}})">
+    <span class="menubar">
+      <span class="icon"><i class="fas fa-chevron-right"></i></span>
+      {{ index .Params 1 }}
+    </span>
+  </button>
+  <div class="dropdown-content">
+    <iframe src="https://player.bilibili.com/player.html?bvid={{ index .Params 0 }}&&page=1&as_wide=1&high_quality=1&danmaku=0&autoplay=0" 
+    scrolling="no" 
+    border="0" 
+    frameborder="no" 
+    framespacing="0" 
+    allowfullscreen="true"></iframe>
+  </div>
+</div>
+
+<script>
+function toggleDropdown(title) {
+  var dropdowns = document.querySelectorAll('.dropdown');
+  var selected_dropdown
+  for (let dropdown of dropdowns) {
+    let menubar = dropdown.querySelector('.menubar')
+    let menuTitle = menubar.innerText.trim()
+    if (menuTitle === title) {
+      selected_dropdown = dropdown
+      break
+    }
+  }
+  if (selected_dropdown == null) {
+    return
+  }
+  var icon = selected_dropdown.querySelector('.icon i');
+  var content = selected_dropdown.querySelector('.dropdown-content')
+  if (content.style.display === "none" || content.style.display === "") {
+    content.style.display = "block";
+    icon.classList.remove('fa-chevron-right');
+    icon.classList.add('fa-chevron-down');
+  } else {
+    content.style.display = "none";
+    icon.classList.remove('fa-chevron-down');
+    icon.classList.add('fa-chevron-right');
+  }
+}
+</script>

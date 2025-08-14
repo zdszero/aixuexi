@@ -1,0 +1,14 @@
+{{$src := .Get 0}}
+{{$width := .Get 1 | default "auto"}}
+<div class="img-container" style="height: auto; width: {{$width}};" oncontextmenu="return false;">
+  <img 
+    src="{{$src}}" 
+    style="width: 100%; height: auto;" 
+    alt="" 
+    draggable="false"
+    oncontextmenu="return false"
+    onmousedown="return false"
+    onselectstart="return false"
+  >
+</div>
+

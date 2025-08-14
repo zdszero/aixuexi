@@ -1,0 +1,103 @@
+{{- $id := .Get "id" | default (printf "q%d" (now.UnixNano)) -}}
+{{- $identifier := printf "### <a id=\"%s\"></a>%s" $id $id -}}
+
+##### {{ $id }}
+
+<div class="quiz-header td-max-width-on-larger-screens">
+  <button class="quiz-save-btn" data-quiz-id="{{ $id | htmlEscape }}" data-quiz-url="{{ .Page.Permalink | htmlEscape }}" aria-label="Save Quiz">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="quiz-save-icon">
+      <path d="M5 4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14l-5-2.5L5 18V4Z" />
+    </svg>
+  </button>
+</div>
+
+{{ .Inner | markdownify }}
+
+{{- if not (.Page.Scratch.Get "quizquestion_included") -}}
+  {{- .Page.Scratch.Set "quizquestion_included" true -}}
+  <script src="/js/save_quiz.js"></script>
+  <style>
+    .quiz-header {
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .quiz-title {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .quiz-content {
+      line-height: 1.6;
+    }
+
+    .quiz-save-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding: 8px;
+      background-color: #f0f2f5;
+      color: #333;
+      border: 1px solid #d9dbdf;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .quiz-save-btn:hover {
+      background-color: #e4e6eb;
+      border-color: #c8cacc;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
+    }
+
+    .quiz-save-btn:active {
+      background-color: #d9dbdf;
+      transform: translateY(0px) scale(0.98);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .quiz-save-btn.saved {
+      background-color: #d4edda;
+      border-color: #c3e6cb;
+      color: #155724;
+    }
+
+    .quiz-save-btn.saved:hover {
+      background-color: #c3e6cb;
+      border-color: #b1dfbb;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
+    }
+
+    .quiz-save-btn.saved:active {
+      background-color: #b1dfbb;
+      transform: translateY(0px) scale(0.98);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .quiz-save-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .quiz-header {
+        margin-bottom: 40px;
+      }
+
+      .quiz-save-btn {
+        position: static;
+        width: 100%;
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+      }
+    }
+  </style>
+{{- end -}}

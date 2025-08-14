@@ -1,0 +1,89 @@
+{{ define "main" }}
+<div class="td-content">
+  <h1>收藏试题</h1>
+  <div id="saved-quizzes-list" class="mb-4"></div>
+</div>
+
+{{ if not (.Page.Scratch.Get "saved_quizzes_included") }}
+  {{ .Page.Scratch.Set "saved_quizzes_included" true }}
+  <style>
+    .saved-quiz-item {
+      background-color: #fff;
+      border: 1px solid #d9dbdf;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: box-shadow 0.2s ease;
+    }
+
+    .saved-quiz-item:hover {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
+    }
+
+    .saved-quiz-item h3 {
+      margin: 0 0 10px 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .saved-quiz-item h3 a {
+      color: #0D6EFD;
+      text-decoration: none;
+    }
+
+    .saved-quiz-item h3 a:hover {
+      text-decoration: underline;
+    }
+
+    .saved-quiz-item p {
+      margin: 0;
+      color: #555;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .no-quizzes {
+      color: #555;
+      font-size: 1.1rem;
+      text-align: center;
+      padding: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .saved-quiz-item {
+        padding: 10px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const quizzes = JSON.parse(localStorage.getItem('quizCollection')) || [];
+      const quizList = document.getElementById('saved-quizzes-list');
+
+      if (quizList) {
+        if (quizzes.length === 0) {
+          quizList.innerHTML = '<p class="no-quizzes">No quizzes saved yet.</p>';
+        } else {
+          quizList.innerHTML = '';
+          quizzes.forEach(quiz => {
+            const quizItem = document.createElement('div');
+            quizItem.className = 'saved-quiz-item';
+            quizItem.innerHTML = `
+              <h3><a href="${quiz.url}" target="_blank">${quiz.title}</a></h3>
+              <p>${quiz.preview || 'No preview available'}</p>
+            `;
+            quizList.appendChild(quizItem);
+          });
+        }
+      }
+    });
+  </script>
+{{ end }}
+{{ end }}
+
