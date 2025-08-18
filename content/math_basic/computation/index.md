@@ -60,4 +60,67 @@ weight: 1
 |-----|------------------|
 | $B$ | batch size       |
 | $L$ | number of layers |
-| $T$ | sequence length  |
+| $T$ | sequence length (query) |
+| $S$ | sequence length (key/value) |
+| $V$ | vocab |
+| $D$ | dimension of model (embedding size) |
+| $F$ | MLP hidden dimension |
+| $H$ | attention head dimension |
+| $N$ | number of query heads |
+| $K$ | number of key/value heads |
+| $G$ | q heads per kv head |
+
+在 MHA 中，query 的多头数量和 key/value 一致，都设置为 $H$。但是在 MQA 和 GQA 中，key/value 的头数量比 query 更少，上表中的 $K$ 和 $G$ 参数的引入也是为了方便对于这两种 attention 计算情况的论证：
+
+- 对于 MQA，$K=1$，$G=N$。
+- 对于 GQA，$K = N/G$，其中 $K>1$。
+
+$G$ 的含义是一个 key/value 的头被几个 query 的头共用，所以 $K \times G = N$。
+
+#### Embedding 阶段
+
+#### Attention 阶段
+
+Attention 阶段核心包含以下几个数学公式：
+
+- $Q = X W_{Q}$
+- $K = X W_{K}$
+- $V = X W_{V}$
+- $Y = \text{Attention}(Q, K, V) = \text{Softmax}(\frac{Q K^{T}}{\sqrt{d_k}})V$
+- $Z = YW_{O}$
+- $\text{Output} = \text{LayerNorm}(X+Z)$
+
+Attention 计算可以分为三大部分：
+
+- 线性投影/矩阵乘法（linear projection/gemm）：$X$ 和 $W_{Q}, W_{K}, W_{V}, W_{O}$ 相乘
+- 注意力得分计算（attention score）
+- 其他运算：layernorm
+
+其中 __gemm__ 的计算量和访存量如下表所示：
+
+| operation | inference FLOPs | params |
+| :--- | :--- | :--- |
+| $A[B,T,\textcolor{red}{D}] \cdot W_Q[\textcolor{red}{D},N,H]$ | $2BTDNH$ | $DNH$ |
+| $A[B,T,\textcolor{red}{D}] \cdot W_K[\textcolor{red}{D},K,H]$ | $2BTDKH$ | $DKH$ |
+| $A[B,T,\textcolor{red}{D}] \cdot W_V[\textcolor{red}{D},K,H]$ | $2BTDKH$ | $DKH$ |
+| $A[B,T,\textcolor{red}{N,H}] \cdot W_O[N,\textcolor{red}{H,D}]$ | $2BTDNH$ | $DNH$ |
+
+其中 __attention score__ 的计算量如下表所示：
+
+| operation | inference FLOPs |
+|-----------|-----------------|
+| $Q[\textcolor{blue}{B},T,\textcolor{blue}{K},G,\textcolor{red}{H}] \cdot K[\textcolor{blue}{B},S,\textcolor{blue}{K},\textcolor{red}{H}]$ | $2BTSKGH=2BTSNH$ |
+| $\text{softmax}_{S}\ L[B,T,S,K,G]$ | $O(BTSKG)=O(BTSN)$ |
+| $S[\textcolor{blue}{B},T,\textcolor{red}{S},\textcolor{blue}{K},G] \cdot V[\textcolor{blue}{B},\textcolor{red}{S},\textcolor{blue}{K},H]$ | $2BTSKGH=2BTSNH$ |
+
+attention score 的计算量其实取决于 $T$（q length）
+
+#### MLP/MOE 阶段
+
+首先说一说 MLP，MLP 在当前 transformer 的模型中有两种常见实现方式，一种是 up/down，另一种是 in1/in2/out。
+
+第一种 up/down 就是经典的 transformer 论文中提到的两层线性层，包含三个数学公式：
+
+- $H_{up} = \sigma(XW_{up} + b_{up})$
+
+#### Unembedding 阶段
