@@ -70,6 +70,8 @@ weight: 1
 | $K$ | number of key/value heads |
 | $G$ | q heads per kv head |
 
+在实践中，常常设置 $NH=D$，但是严格上来说，两者的 dimension 可以不一致，所以需要区分开来。
+
 在 MHA 中，query 的多头数量和 key/value 一致，都设置为 $H$。但是在 MQA 和 GQA 中，key/value 的头数量比 query 更少，上表中的 $K$ 和 $G$ 参数的引入也是为了方便对于这两种 attention 计算情况的论证：
 
 - 对于 MQA，$K=1$，$G=N$。
@@ -108,20 +110,56 @@ Attention 计算可以分为三大部分：
 
 | operation | inference FLOPs | params | output shape |
 | :-: | :-: | :-: | :-: |
-| $A[B,T,\textcolor{red}{D}] \cdot W_Q[\textcolor{red}{D},N,H]$ | $2BTDNH$ | $DNH$ | $[B,T,D,H]$ |
-| $A[B,T,\textcolor{red}{D}] \cdot W_K[\textcolor{red}{D},K,H]$ | $2BTDKH$ | $DKH$ |
-| $A[B,T,\textcolor{red}{D}] \cdot W_V[\textcolor{red}{D},K,H]$ | $2BTDKH$ | $DKH$ |
-| $A[B,T,\textcolor{red}{N,H}] \cdot W_O[N,\textcolor{red}{H,D}]$ | $2BTDNH$ | $DNH$ |
+| $A[B,T,\textcolor{red}{D}] \cdot W_Q[\textcolor{red}{D},N,H]$ | $2BTDNH$ | $DNH$ | $Q[B,T,D,H]$ |
+| $A[B,T,\textcolor{red}{D}] \cdot W_K[\textcolor{red}{D},K,H]$ | $2BTDKH$ | $DKH$ | $K[B,T,K,H]$ |
+| $A[B,T,\textcolor{red}{D}] \cdot W_V[\textcolor{red}{D},K,H]$ | $2BTDKH$ | $DKH$ | $V[B,T,K,H]$ |
+| $A[B,T,\textcolor{red}{N,H}] \cdot W_O[\textcolor{red}{N,H},D]$ | $2BTDNH$ | $DNH$ | $\text{Z}[B,T,D]$|
 
 其中 __attention score__ 的计算量如下表所示：
 
-| operation | inference FLOPs |
-|-----------|-----------------|
-| $Q[\textcolor{blue}{B},T,\textcolor{blue}{K},G,\textcolor{red}{H}] \cdot K[\textcolor{blue}{B},S,\textcolor{blue}{K},\textcolor{red}{H}]$ | $2BTSKGH=2BTSNH$ |
-| $\text{softmax}_{S}\ L[B,T,S,K,G]$ | $O(BTSKG)=O(BTSN)$ |
-| $S[\textcolor{blue}{B},T,\textcolor{red}{S},\textcolor{blue}{K},G] \cdot V[\textcolor{blue}{B},\textcolor{red}{S},\textcolor{blue}{K},H]$ | $2BTSKGH=2BTSNH$ |
+| operation | inference FLOPs | output shape |
+|-----------|-----------------|--|
+| $Q[\textcolor{blue}{B},T,\textcolor{blue}{K},G,\textcolor{red}{H}] \cdot K[\textcolor{blue}{B},S,\textcolor{blue}{K},\textcolor{red}{H}]$ | $2BTSKGH=2BTSNH$ | $\text{score}[B,T,S,K,G]=[B,T,S,N]$ |
+| $\text{softmax}_{S}\ L[B,T,S,K,G]$ | $O(BTSKG)=O(BTSN)$ | |
+| $S[\textcolor{blue}{B},T,\textcolor{red}{S},\textcolor{blue}{K},G] \cdot V[\textcolor{blue}{B},\textcolor{red}{S},\textcolor{blue}{K},H]$ | $2BTSKGH=2BTSNH$ | $Y[B,T,K,G,H]=[B,T,N,H]$ |
 
-attention score 的计算量其实取决于 $T$（q length）
+根据以上推导，可以得到以下结论：
+
+- Z 的 shape 和输入相同，都是 $[B,T,D]$，所以可以将两者直接相加，再进行 LayerNorm 得到 Output。
+- Self Attention 的计算量取决于 q 和 k/v length。
+    - 如果忽略 softmax 的话，总共的计算量为 $O(BTSNH)$。
+
+为了方便理解，我们考虑以下 $B=1$、$N=1$ 的情况，计算过程为如下公式：
+
+$$
+\begin{aligned}
+Y&=\underbrace{\begin{bmatrix}
+\alpha_{11} & \alpha_{12} & \cdots & \alpha_{1n}\\
+\alpha_{21} & \alpha_{22} & \cdots & \alpha_{2n}\\
+\vdots & \vdots & \ddots & \vdots \\
+\alpha_{n1} & \alpha_{n2} & \cdots & \alpha_{nn}
+\end{bmatrix}}_{\displaystyle \alpha=\operatorname{Softmax}\!\left(\frac{QK^{\top}}{\sqrt{d_k}}\right)}
+\begin{bmatrix}
+v_1\\ v_2\\ \vdots\\ v_n
+\end{bmatrix}
+\\[4pt]
+&=\begin{bmatrix}
+\alpha_{11}v_1+\alpha_{12}v_2+\cdots+\alpha_{1n}v_n\\
+\alpha_{21}v_1+\alpha_{22}v_2+\cdots+\alpha_{2n}v_n\\
+\vdots\\
+\alpha_{n1}v_1+\alpha_{n2}v_2+\cdots+\alpha_{nn}v_n
+\end{bmatrix}.
+\end{aligned}
+$$
+
+其中 $\alpha_{ij}$ 是当前 token 和先前每一个 token 的注意力得分，通过以下方式计算出来，注意 Softmax 是按照行作用的：
+
+$$
+s_{ij}=\frac{q_i\cdot k_j}{\sqrt{d_k}},\qquad
+\alpha_{ij}=\frac{e^{s_{ij}}}{\sum_{t=1}^{n} e^{s_{it}}}
+$$
+
+注意力得分矩阵的 shape 为 $[T, S]$，行长度就是 query length，列长度就是 kv length，每行就是一个 token 和之前 token 的注意力打分，还需要乘上对应的 $v$ 向量。再乘以 $V$ 的时候收缩的维度是在行上，所以 contracting dimension 是 $S$。
 
 #### MLP/MOE 阶段
 
@@ -136,7 +174,7 @@ attention score 的计算量其实取决于 $T$（q length）
 第二种方式是 in1/in2/out，两个 in 是并行的线性映射，一个负责主通道（值），一个负责门控（控制开关）。比传统 up/down 更灵活，计算量略多，但性能通常更好。
 
 - $U = XW_{\text{in1}} + b_{\text{in1}}$
-- $G = XW_{\text{in1}} + b_{\text{in2}}$
+- $G = XW_{\text{in2}} + b_{\text{in2}}$
 - $H_{\text{gated}} = \sigma(G) \odot U$
 - $H_{\text{out}} = H_{\text{gated}} W_{\text{out}} + b_{\text{out}}$
 - $\text{Output} = \text{LayerNorm}(X + H_{\text{out}})$
