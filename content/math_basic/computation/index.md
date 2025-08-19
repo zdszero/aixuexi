@@ -79,6 +79,14 @@ $G$ 的含义是一个 key/value 的头被几个 query 的头共用，所以 $K 
 
 #### Embedding 阶段
 
+Embedding 本质是一个查表操作（look-up），不是 gemm，计算量相对小。
+
+- 输入：token id $[B,T]$
+- 查表：$E[\text{Vocab}, D]$，取出对应行
+- 输出：$X[B,T,D]$
+
+该阶段计算量很小，几乎可以忽略不计。
+
 #### Attention 阶段
 
 Attention 阶段核心包含以下几个数学公式：
@@ -98,9 +106,9 @@ Attention 计算可以分为三大部分：
 
 其中 __gemm__ 的计算量和访存量如下表所示：
 
-| operation | inference FLOPs | params |
-| :--- | :--- | :--- |
-| $A[B,T,\textcolor{red}{D}] \cdot W_Q[\textcolor{red}{D},N,H]$ | $2BTDNH$ | $DNH$ |
+| operation | inference FLOPs | params | output shape |
+| :-: | :-: | :-: | :-: |
+| $A[B,T,\textcolor{red}{D}] \cdot W_Q[\textcolor{red}{D},N,H]$ | $2BTDNH$ | $DNH$ | $[B,T,D,H]$ |
 | $A[B,T,\textcolor{red}{D}] \cdot W_K[\textcolor{red}{D},K,H]$ | $2BTDKH$ | $DKH$ |
 | $A[B,T,\textcolor{red}{D}] \cdot W_V[\textcolor{red}{D},K,H]$ | $2BTDKH$ | $DKH$ |
 | $A[B,T,\textcolor{red}{N,H}] \cdot W_O[N,\textcolor{red}{H,D}]$ | $2BTDNH$ | $DNH$ |
@@ -121,6 +129,35 @@ attention score 的计算量其实取决于 $T$（q length）
 
 第一种 up/down 就是经典的 transformer 论文中提到的两层线性层，包含三个数学公式：
 
-- $H_{up} = \sigma(XW_{up} + b_{up})$
+- $H_{\text{up}} = \sigma(XW_{\text{up}} + b_{\text{up}})$
+- $H_{\text{down}} = H_{\text{up}}W_{\text{down}} + b_{\text{down}}$
+- $\text{Output} = \text{LayerNorm}(X + H_{\text{down}})$
+
+第二种方式是 in1/in2/out，两个 in 是并行的线性映射，一个负责主通道（值），一个负责门控（控制开关）。比传统 up/down 更灵活，计算量略多，但性能通常更好。
+
+- $U = XW_{\text{in1}} + b_{\text{in1}}$
+- $G = XW_{\text{in1}} + b_{\text{in2}}$
+- $H_{\text{gated}} = \sigma(G) \odot U$
+- $H_{\text{out}} = H_{\text{gated}} W_{\text{out}} + b_{\text{out}}$
+- $\text{Output} = \text{LayerNorm}(X + H_{\text{out}})$
+
+现在 transformer 架构通常使用第二种方式，几个核心的操作都是 gemm 操作，其计算量如下：
+
+| operation | inference FLOPs | params |
+|---|---|---|
+| $A[B,T,\textcolor{red}{D}] \cdot W_{in1}[\textcolor{red}{D},F]$ | $2BTDF$ | $DF$ |
+| $A[B,T,\textcolor{red}{D}] \cdot W_{in2}[\textcolor{red}{D},F]$ | $2BTDF$ | $DF$ |
+| $\sigma(A_{in1})[B,T,F] * A_{in2}[B,T,F]$ | $O(BTF)$ | |
+| $A[B,T,\textcolor{red}{F}] \cdot W_{out}[\textcolor{red}{F},D]$ | $2BTDF$ | $DF$ |
+
+---
+
+如果是使用 MOE 的模型，主要包含以下几个数学公式：
+
+- 路由器：$g= W_{gate}x$
+- 选择 k 专家：$S = TopK(g,k)$
+- 归一化权重：$w_{i} = \frac{exp(g_i)}{\sum_{j \in S} exp(g_i)}, i \in S$
+- 专家计算：$f_{i}(x) = \sigma(x W_{i,1})W_{i,2}$
+- 组合：$y = \sum_{i=1}^{N} w_i f_i(x)$
 
 #### Unembedding 阶段
