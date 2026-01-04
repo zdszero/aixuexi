@@ -1,0 +1,1239 @@
+////////////////////////////////////////////////////////////////////////
+//                              SOLUTION                              //
+////////////////////////////////////////////////////////////////////////
+body.dark-mode .markmap {
+  color: #fff;
+  font-weight: 450;
+}
+
+body.dark-mode .solution-btn {
+  color: #bbbbbb;
+}
+
+body.dark-mode .solution-btn:hover,
+body.dark-mode .solution-btn:focus {
+  color: #ffffff;
+}
+
+body.dark-mode .solution-detail {
+  background-color: #1e2a35;
+  color: #d0d7de;
+  border-color: #3b5164;
+}
+
+body.dark-mode .solution-detail strong {
+  color: #80bfff;
+}
+
+body.eyecare-mode .solution-btn {
+  color: #a0642a;
+}
+
+body.eyecare-mode .solution-btn:hover,
+body.eyecare-mode .solution-btn:focus {
+  color: #8b5623;
+}
+
+body.eyecare-mode .solution-detail {
+  background-color: #faf5f0;
+  color: #5d4a37;
+  border-color: #d4b896;
+}
+
+body.eyecare-mode .solution-detail strong {
+  color: #c1713d;
+}
+
+/* Light Mode Styles */
+pre {
+  background: #f8f8f8 !important;
+}
+
+code {
+  background: #f8f9fa !important;
+}
+
+.show-hide-icons {
+  color: #333333 !important;
+}
+
+.svg-container rect:not([stroke="none"]) {
+  stroke: black;
+}
+
+.dark-mode pre {
+  background: #2d2d2d !important;
+}
+
+.dark-mode code {
+  background: #1b1f22 !important;
+}
+
+.dark-mode .show-hide-icons {
+  color: white !important;
+}
+
+.dark-mode .svg-container rect {
+  stroke: white;
+}
+
+.eyecare-mode pre {
+  background: #fdf6e3 !important;
+}
+
+.eyecare-mode code {
+  background: #f8f9fa !important;
+}
+
+.eyecare-mode .show-hide-icons {
+  color: #333333 !important;
+}
+
+.eyecare-mode .svg-container rect:not([stroke="none"]) {
+  stroke: black;
+}
+
+// 表格配色
+/* 默认亮色模式下的表格样式 */
+table {
+  --bs-table-bg-type: white;
+  --bs-table-striped-bg: #f0f0f0;
+  --bs-table-color-state: black;
+  
+  background-color: var(--bs-table-bg-type);
+  color: var(--bs-table-color-state);
+}
+
+/* 条纹表格行的背景色 */
+table tr:nth-child(even),
+table .table-striped tbody tr:nth-child(odd) {
+  background-color: var(--bs-table-striped-bg);
+}
+
+/* 暗色模式下的表格样式 */
+.dark-mode table {
+  --bs-table-bg-type: #2e2e2e;
+  --bs-table-striped-bg: #3c3c3c;
+  --bs-table-color-state: white;
+}
+
+/* 护眼模式下的表格样式 */
+.eyecare-mode table {
+  --bs-table-bg-type: #fdf9f4;     /* 与整体背景一致的温暖米色 */
+  --bs-table-striped-bg: #f5ede3;  /* 更柔和的条纹背景，与 hover 效果一致 */
+  --bs-table-color-state: #5d4a37; /* 与整体文字颜色一致的深棕色 */
+}
+
+
+/* 如果使用 Bootstrap 的表格类 */
+.table {
+  --bs-table-bg: var(--bs-table-bg-type);
+  --bs-table-striped-bg: var(--bs-table-striped-bg);
+  --bs-table-color: var(--bs-table-color-state);
+}
+
+/* 表格单元格样式 */
+table td, table th {
+  background-color: inherit;
+  color: inherit;
+}
+
+////////////////////////////////////////////////////////////////////////
+//                               KATEX                                //
+////////////////////////////////////////////////////////////////////////
+
+.choice-container .td-max-width-on-larger-screens {
+  max-width: none !important;
+  width: auto !important;
+}
+
+.choice-container .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  display: block;
+  padding-bottom: 0.2rem; /* optional, avoids scrollbar overlap */
+}
+
+.solution-detail .td-max-width-on-larger-screens {
+  max-width: none !important;
+  width: auto !important;
+}
+
+.solution-detail .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  display: block;
+  padding-bottom: 0.2rem; /* optional, avoids scrollbar overlap */
+}
+
+////////////////////////////////////////////////////////////////////////
+//                               CHOICE                               //
+////////////////////////////////////////////////////////////////////////
+body.dark-mode .choice-container {
+  background-color: #2b2b2b;
+  border-color: #444;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  color: #e0e0e0;
+}
+
+body.dark-mode .choice-option {
+  background-color: #3a3a3a;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+body.dark-mode .choice-option:hover {
+  background-color: #33475b;
+  border-color: #66b0ff;
+}
+
+body.dark-mode .choice-label {
+  color: #66b0ff;
+}
+
+body.dark-mode .choice-text {
+  color: #ddd;
+}
+
+body.dark-mode .choice-text code {
+  background-color: #444;
+  color: #f78c6c;
+}
+
+body.dark-mode .toggle-btn {
+  color: #bbbbbb;
+}
+
+body.dark-mode .toggle-btn:hover,
+body.dark-mode .toggle-btn:focus {
+  color: #ffffff;
+}
+
+body.dark-mode .explanation {
+  background-color: #1e2a35;
+  color: #cdd5df;
+  border-color: #3b5164;
+}
+
+body.dark-mode .explanation strong {
+  color: #80bfff;
+}
+
+body.dark-mode .explanation .correct-answer-text {
+  color: #48d69f;
+}
+
+body.dark-mode .feedback-area.correct {
+  background-color: #234d38;
+  color: #c3f3d8;
+  border-color: #3ea785;
+}
+
+body.dark-mode .feedback-area.incorrect {
+  background-color: #552222;
+  color: #f7bcbc;
+  border-color: #cc6666;
+}
+
+body.eyecare-mode .choice-container {
+  background-color: #fdf9f4;
+  border-color: #d4b896;
+  box-shadow: 0 4px 12px rgba(193, 113, 61, 0.1);
+  color: #5d4a37;
+}
+
+body.eyecare-mode .choice-option {
+  background-color: #faf5f0;
+  border-color: #d4b896;
+  color: #5d4a37;
+}
+
+body.eyecare-mode .choice-option:hover {
+  background-color: #f5ede3;
+  border-color: #c1713d;
+}
+
+body.eyecare-mode .choice-label {
+  color: #c1713d;
+}
+
+body.eyecare-mode .choice-text {
+  color: #5d4a37;
+}
+
+body.eyecare-mode .choice-text code {
+  background-color: #f5ede3;
+  color: #a0642a;
+}
+
+body.eyecare-mode .toggle-btn {
+  color: #a0642a;
+}
+
+body.eyecare-mode .toggle-btn:hover,
+body.eyecare-mode .toggle-btn:focus {
+  color: #8b5623;
+}
+
+body.eyecare-mode .explanation {
+  background-color: #faf5f0;
+  color: #5d4a37;
+  border-color: #d4b896;
+}
+
+body.eyecare-mode .explanation strong {
+  color: #c1713d;
+}
+
+body.eyecare-mode .explanation .correct-answer-text {
+  color: #7a8471;
+}
+
+body.eyecare-mode .feedback-area.correct {
+  background-color: #f0f4ed;
+  color: #4a5d43;
+  border-color: #7a8471;
+}
+
+body.eyecare-mode .feedback-area.incorrect {
+  background-color: #fdf4f1;
+  color: #a8645a;
+  border-color: #d49388;
+}
+
+body.dark-mode .choice-option-inline {
+  background-color: #3a3a3a;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+body.dark-mode .choice-option-inline:hover {
+  background-color: #33475b;
+  border-color: #66b0ff;
+}
+
+body.dark-mode .choice-label {
+  color: #66b0ff;
+}
+
+body.dark-mode .choice-option-inline input[type="radio"] {
+  accent-color: #66b0ff;
+}
+
+body.eyecare-mode .choice-option-inline {
+  background-color: #faf5f0;
+  border-color: #d4b896;
+  color: #5d4a37;
+}
+
+body.eyecare-mode .choice-option-inline:hover {
+  background-color: #f5ede3;
+  border-color: #c1713d;
+}
+
+body.eyecare-mode .choice-label {
+  color: #c1713d;
+}
+
+body.eyecare-mode .choice-option-inline input[type="radio"] {
+  accent-color: #c1713d;
+}
+
+////////////////////////////////////////////////////////////////////////
+//                              REGION                               //
+////////////////////////////////////////////////////////////////////////
+/* Eyecare Mode */
+.eyecare-mode .region {
+    background-color: #fdf9f4 !important; /* 温暖米色 */
+    color: #5d4a37;
+}
+.eyecare-mode .region-info {
+    background-color: #faf5f0;
+    color: #5d4a37;
+}
+.eyecare-mode .region-tip {
+    background-color: #f0f4ed;
+    color: #4a5d43;
+}
+.eyecare-mode .region-note {
+    background-color: #f5f0ed;
+    color: #6b5147;
+}
+.eyecare-mode .region-warn {
+    background-color: #fcf6f0;
+    color: #a0642a;
+}
+.eyecare-mode .region-danger {
+    background-color: #fdf4f1;
+    color: #a8645a;
+}
+
+/* Dark Mode */
+.dark-mode .region {
+    background-color: #1e1e1e;
+    color: #dcdcdc;
+    box-shadow: none;
+}
+.dark-mode .region-info {
+    border-left-color: #6c6c6c;
+    background-color: #2a2a2a;
+    color: #c0c0c0;
+}
+.dark-mode .region-tip {
+    border-left-color: #66bb6a;
+    background-color: #1f2f1f;
+    color: #a5d6a7;
+}
+.dark-mode .region-note {
+    border-left-color: #4fc3f7;
+    background-color: #1e2a33;
+    color: #b3e5fc;
+}
+.dark-mode .region-warn {
+    border-left-color: #ffca28;
+    background-color: #2d2600;
+    color: #ffe082;
+}
+.dark-mode .region-danger {
+    border-left-color: #ef5350;
+    background-color: #2e1a1b;
+    color: #ef9a9a;
+}
+
+////////////////////////////////////////////////////////////////////////
+//                              DETAILS                               //
+////////////////////////////////////////////////////////////////////////
+body.dark-mode .elegant-detail {
+    border-color: #4a4a4a;
+    background-color: #333333;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .elegant-detail:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .elegant-summary {
+    background-color: #3f3f3f;
+    color: #e0e0e0;
+}
+
+body.dark-mode .elegant-summary:hover {
+    background-color: #4a4a4a;
+}
+
+body.dark-mode .elegant-summary::after {
+    color: #66bfff; /* Lighter blue for dark mode icon */
+}
+
+body.dark-mode .elegant-detail-content {
+    background-color: #333333; /* Match detail background */
+    color: #dcdcdc;
+}
+
+body.eyecare-mode .elegant-detail {
+    border-color: #d4b896;
+    background-color: #fdf9f4;
+    box-shadow: 0 2px 10px rgba(193, 113, 61, 0.1);
+}
+
+body.eyecare-mode .elegant-detail:hover {
+    box-shadow: 0 4px 15px rgba(193, 113, 61, 0.15);
+}
+
+body.eyecare-mode .elegant-summary {
+    background-color: #faf5f0;
+    color: #5d4a37;
+}
+
+body.eyecare-mode .elegant-summary:hover {
+    background-color: #f5ede3;
+}
+
+body.eyecare-mode .elegant-summary::after {
+    color: #c1713d; /* 温暖橙棕色 */
+}
+
+body.eyecare-mode .elegant-detail-content {
+    background-color: #fdf9f4;
+    color: #5d4a37;
+}
+
+////////////////////////////////////////////////////////////////////////
+//                            TOC settings                            //
+////////////////////////////////////////////////////////////////////////
+.td-toc a {
+    display: block;
+    font-weight: 400;
+    padding-bottom: 0.4rem;
+    font-size: 0.9rem;
+    color: #2c3e50;
+    transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.td-toc a:hover {
+  color: #007bff;
+  transform: translateX(4px);
+}
+
+.td-toc a::before {
+    background: #b9bdc5;
+    border-radius: "50%";
+    content: "";
+    float: left;
+    height: 6px;
+    margin: 7px 8px 0 0;
+    width: 6px;
+    transition: background 0.3s ease;
+}
+
+.td-toc a:hover::before {
+    background: #007bff;
+}
+
+.td-toc ul ul {
+    padding-left: 0.8em;
+}
+
+
+body.eyecare-mode .td-toc {
+  a {
+    color: #5d4a37 !important; /* 深棕色文字 */
+    &::before { background: #d4b896; } /* 浅棕色圆点 */
+  }
+  
+  a:hover {
+    color: #c1713d !important; /* 橙棕色高亮 */
+    &::before { background: #c1713d; }
+  }
+
+  /* 当前激活的目录项 */
+  .active {
+    color: #c1713d !important;
+    font-weight: 600;
+  }
+}
+
+
+.img-container img {
+    padding-bottom: 1em;
+}
+
+.svg-container svg {
+    vertical-align: middle;
+    height: auto;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Oxygen,
+        Ubuntu,
+        Cantarell,
+        "Open Sans",
+        "Helvetica Neue",
+        sans-serif;
+    padding-bottom: 1em;
+    max-width: 80%;
+    width: 80%;
+    font {
+        font-family:
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            Oxygen,
+            Ubuntu,
+            Cantarell,
+            "Open Sans",
+            "Helvetica Neue",
+            sans-serif;
+    }
+}
+
+body.dark-mode .svg-container {
+    b,
+    font {
+        color: white;
+    }
+    div[data-drawio-colors] div {
+        color: white !important;
+    }
+    .mermaid {
+        text.messageText {
+            fill: white !important;
+        }
+        line {
+            stroke: white !important;
+        }
+    }
+}
+
+@media (max-width: 768px) and (hover: none) {
+  .svg-container {
+    width: 100% !important;
+  }
+
+  .svg-container svg {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto;
+  }
+}
+
+
+.markmap > svg {
+    width: 100%;
+    height: 600px;
+}
+
+.lead {
+    font-size: 1rem;
+    font-weight: 500;
+    color: gray;
+}
+
+.section-index h5, .section-index .h5 {
+    margin-bottom: 0.4em;
+}
+
+//
+// 对 h3-h5 标题进行编号
+//
+.td-content {
+    counter-reset: h3counter; /* 整篇文章的 h3 编号从零开始 */
+    h3 {
+        counter-reset: h4counter; /* 每次遇到新的 h3，重置 h4 */
+    }
+    h4 {
+        counter-reset: h5counter; /* 每次遇到新的 h4，重置 h5 */
+    }
+    // h3 按照 一、二、三 这样的顺序进行编号
+    h3::before {
+        counter-increment: h3counter;
+        content: counter(h3counter, cjk-ideographic) " 、";
+        display: inline;
+        visibility: visible;
+    }
+    // h4 按照 1.1、1.2、1.3 这样的顺序进行编号
+    h4::before {
+        counter-increment: h4counter;
+        content: counter(h3counter, decimal) "." counter(h4counter) "、";
+        display: inline;
+        visibility: visible;
+    }
+    // h5 按照 a)、b)、c) 这样的顺序进行编号
+    h5::before {
+        content: "◆ ";
+        display: inline;
+        visibility: visible;
+        color: #6c757d;;
+    }
+}
+
+.eyecare-mode .td-content {
+    h5::before {
+        color: #8b4513;
+    }
+}
+
+.dark-mode .td-content {
+    h5::before {
+        color: #b0b0b0;
+    }
+}
+
+// 对于元数据（front matter）中增加了以下 key:value 的页面：
+// body_class: no-counter
+// 忽略 h3-h5 的前置标题
+body.no-counter .td-content h3::before,
+body.no-counter .td-content h4::before,
+body.no-counter .td-content h5::before {
+    display: none;
+}
+
+
+////////////////////////////////////////////////////////////////////////
+//                               NAVBAR                               //
+////////////////////////////////////////////////////////////////////////
+// 向上滑动时自动隐藏 menebar
+// 下文中 !important 的部分是对默认 css 的修改
+// 将 td-navbar 从 fixed 修改为 relative
+// sidebar 的 padding-top 修改得更小一些
+@media (min-width: 768px) {
+    .td-navbar {
+        position: relative !important;
+        top: 0;
+        width: 100%;
+        // 首页颜色和背景色对齐
+        background-color: #2b2934 !important;
+    }
+
+    @supports (position: sticky) {
+        .td-sidebar-toc {
+            position: sticky;
+            top: 0rem !important;
+            height: calc(100vh - 0rem) !important;
+            overflow-y: auto;
+        }
+
+        .td-sidebar__inner {
+            position: sticky;
+            top: 0rem !important;
+            z-index: 10;
+            height: calc(100vh - 1rem) !important;
+        }
+
+        .td-sidebar {
+            padding-top: 0.2rem !important;
+            background-color: var(--bs-body-tertiary-bg);
+            padding-right: 1rem;
+            border-right: 1px solid var(--bs-border-color);
+        }
+
+        .td-404 main, .td-main main {
+            padding-top: 1.5rem !important;
+        }
+    }
+}
+
+.nav-tabs .nav-link {
+  color: grey;
+}
+
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link.show {
+    color: #1a73e8;
+    text-decoration: none;
+    border-bottom: 2px solid #1a73e8;
+    transition: border-color 0.3s ease;
+}
+
+.navbar-nav .nav-link {
+    color: white;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #007bff;
+}
+
+.navbar-brand {
+    color: #a8cbf7;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.dark-mode .navbar-nav .nav-link {
+    color: #cccccc; /* Light gray for inactive links */
+}
+
+.dark-mode .navbar-nav .nav-link.active,
+.dark-mode .navbar-nav .nav-link.show {
+    color: #66b0ff;
+    border-bottom: 2px solid #66b0ff;
+}
+
+// Search bar and non-root URL styling
+.non-root-url {
+    background: linear-gradient(180deg, #ffffff, #f8f9fa);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    .td-search__input {
+        border: 1px solid #ced4da;
+        color: #495057;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .td-search__input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+    .navbar-brand {
+        color: #1a73e8;
+    }
+    .navbar-brand:hover {
+        color: #4a8cf0;
+    }
+    .nav-link {
+      color: #2c3e50;
+    }
+}
+
+.eyecare-mode .non-root-url {
+    background: linear-gradient(180deg, #fdf9f4, #faf5f0);
+}
+
+.dark-mode .non-root-url {
+    background: linear-gradient(180deg, #343a40, #2c3136);
+}
+
+div#hide-sidebar-div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+    padding-top: 1rem;
+    height: 2rem;
+    width: 100%;
+}
+
+.td-sidebar-nav {
+  font-size: 0.9em;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+}
+
+.td-sidebar {
+    padding-bottom: 5.2rem;
+}
+
+.td-footer {
+    min-height: 130px;
+}
+
+aside#show-sidebar-col {
+    display: none;
+    position: relative;
+    width: 10%;
+    top: 0;
+    right: 0;
+}
+
+div#show-sidebar-left {
+    flex: 1;
+}
+
+div#show-sidebar-right {
+    flex: 3;
+}
+
+i#show-sidebar-icon {
+    cursor: pointer;
+    position: sticky;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+aside#show-toolbar-col {
+    display: none;
+    position: relative;
+    width: 10%;
+}
+
+div#show-toolbar-left {
+    flex: 3;
+}
+
+div#show-toolbar-right {
+    flex: 1;
+}
+
+i#show-toolbar-icon {
+    cursor: pointer;
+    position: sticky;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.eyecare-mode {
+  background-color: #fdf9f4;  /* 温暖米色背景 */
+  color: #5d4a37;              /* 深棕色字体 */
+
+  .nav-tabs .nav-link.active,
+  .nav-tabs .nav-item.show .nav-link {
+    background-color: #faf5f0; /* 柔和米色 */
+    border-color: #d4b896;
+    color: #5d4a37;
+  }
+
+  .taxonomy-term {
+    background-color: #faf5f0;
+    color: #5d4a37;
+    border-radius: 4px;
+    padding: 4px 8px;
+  }
+
+  .taxonomy-count {
+    background-color: #f5ede3;
+    color: #6b5147;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 90%;
+  }
+
+  .breadcrumb-item {
+    color: #a0642a;
+  }
+
+  a {
+    color: #c1713d;
+  }
+
+  a:hover,
+  a:focus {
+    color: #a0642a;
+    text-decoration: underline;
+  }
+}
+
+.dark-mode {
+  background-color: #1e1e1e;
+  color: #dcdcdc;
+}
+
+.dark-mode a {
+  color: #4dabf7; /* 柔和蓝色链接 */
+}
+
+.dark-mode #hide-toolbar {
+  color: #4dabf7 !important;
+}
+
+.dark-mode .alert {
+  background-color: #2c2c2c;
+  border-left: 4px solid #4dabf7;
+  color: #e0e0e0;
+}
+
+.dark-mode tr {
+  color: #e8e8e8;
+}
+
+.dark-mode .table-striped > tbody > tr:nth-of-type(odd) > *,
+.dark-mode .td-table:not(.td-initial) > tbody > tr:nth-of-type(odd) > *,
+.dark-mode .td-content table:not(.td-initial) > tbody > tr:nth-of-type(odd) > *,
+.dark-mode .td-box table:not(.td-initial) > tbody > tr:nth-of-type(odd) > * {
+  --bs-table-accent-bg: #2a2a2a;
+  background-color: var(--bs-table-accent-bg);
+  color: #e0e0e0;
+}
+
+.dark-mode .td-sidebar-nav .td-sidebar-link__page {
+  color: #eeeeee;
+  font-weight: 400;
+}
+
+.dark-mode .td-sidebar-nav__section-title a {
+  color: #8ce99a;
+  font-weight: 500;
+}
+
+.dark-mode .td-toc #TableOfContents a {
+  color: #cccccc;
+}
+
+.dark-mode .td-content pre {
+  background-color: #2b2b2b;
+  color: #f1f1f1;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-wrap: break-word;
+}
+
+.dark-mode .nav-tabs .nav-link.active,
+.dark-mode .nav-tabs .nav-item.show .nav-link {
+  color: #ffffff;
+  background-color: #2e3b4e;
+  border-color: #4dabf7;
+}
+
+.dark-mode .taxonomy-term {
+  background-color: #3a3a3a;
+  color: #f0f0f0;
+}
+
+.dark-mode .taxonomy-count {
+  background-color: #555;
+  color: #e0e0e0;
+}
+
+.dark-mode .taxonomy-title {
+  color: #4dabf7;
+}
+
+.dark-mode .pageinfo {
+  background-color: #2d2d2d;
+  color: #dcdcdc;
+}
+
+.dark-mode .breadcrumb-item {
+  color: #aaaaaa;
+}
+
+.td-sidebar {
+    visibility: hidden;
+}
+
+.td-sidebar-toc {
+    visibility: hidden;
+}
+
+.td-sidebar-link.tree-root {
+    display: none;
+}
+
+.custom-detail {
+    margin: 15px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.custom-summary {
+    font-weight: bold;
+    cursor: pointer;
+    margin: -10px -10px 10px -10px;
+    padding: 10px;
+    background-color: #007acc;
+    color: #fff;
+    border-radius: 5px 5px 0 0;
+}
+
+.custom-summary:hover {
+    background-color: #005a99;
+}
+
+.custom-detail-content {
+    background-color: #ffffff;
+    padding: 10px;
+    border-radius: 0 0 5px 5px;
+}
+
+@media only screen and (max-device-width: 820px) {
+    .tab-content .tab-pane {
+        margin-top: 0rem;
+        margin-bottom: 1.5rem;
+        max-width: 100%;
+        border-left: 1px solid rgba(0, 0, 0, 0.125);
+        border-right: 1px solid rgba(0, 0, 0, 0.125);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+    .svg-container, .img-container {
+      max-width: 100%;
+    }
+}
+
+// remain some space for displaying hide sidebar button
+@media (min-width: 768px) {
+    @supports (position: sticky) {
+        .td-sidebar-nav {
+            max-height: calc(98vh - 10rem);
+            overflow-y: auto;
+        }
+    }
+}
+
+@media (min-width: 768px) {
+    @supports (position: sticky) {
+        .td-sidebar-toc {
+            position: sticky;
+            top: 4rem;
+            height: calc(100vh - 4rem);
+            overflow-y: auto;
+        }
+    }
+
+    .d-xl-block {
+        display: block !important;
+    }
+
+    .col-xl-2 {
+        flex: 0 0 auto;
+        width: 16.66666667%;
+    }
+
+    .col-xl-8 {
+        flex: 0 0 auto;
+        width: 66.66666667%;
+    }
+}
+
+@media (max-width: 767px) {
+    div#hide-sidebar-div {
+        display: none;
+    }
+
+    #sidebar-hr {
+        display: none;
+    }
+
+    .td-404 main,
+    .td-main main {
+        padding-top: 0rem;
+        padding-bottom: 2rem;
+    }
+
+    .td-sidebar {
+        padding-bottom: 0rem;
+    }
+}
+
+// ipad devices width is 90% when horizontally put
+@media (min-width: 992px) {
+    .td-max-width-on-larger-screens,
+    .td-card.card,
+    .td-card-group.card-group,
+    .td-content > .tab-content .tab-pane,
+    .td-content .footnotes,
+    .td-content > .alert,
+    .td-content > .highlight,
+    .td-content > .lead,
+    .td-content > .td-table,
+    .td-box .td-content > table,
+    .td-content > table,
+    .td-content > blockquote,
+    .td-content > dl dd,
+    .td-content > h1,
+    .td-content > .h1,
+    .td-content > h2,
+    .td-content > .h2,
+    .td-content > ol,
+    .td-content > p,
+    .td-content > pre,
+    .td-content > ul {
+        max-width: 95%;
+    }
+}
+
+// computer width is 80%
+@media (min-width: 1400px) {
+    .td-max-width-on-larger-screens,
+    .td-card.card,
+    .td-card-group.card-group,
+    .td-content > .tab-content .tab-pane,
+    .td-content .footnotes,
+    .td-content > .alert,
+    .td-content > .highlight,
+    .td-content > .lead,
+    .td-content > .td-table,
+    .td-box .td-content > table,
+    .td-content > table,
+    .td-content > blockquote,
+    .td-content > dl dd,
+    .td-content > h1,
+    .td-content > .h1,
+    .td-content > h2,
+    .td-content > .h2,
+    .td-content > ol,
+    .td-content > p,
+    .td-content > pre,
+    .td-content > ul {
+        max-width: 80%;
+    }
+}
+
+
+/* ==========================================================================
+   Eyecare Mode Dark System Fix / 护眼模式深色系统修复补丁
+   ========================================================================== */
+
+/* 强制让护眼模式使用浅色方案的默认控件（滚动条、表单等） */
+body.eyecare-mode {
+  color-scheme: light !important;
+}
+
+/* 针对系统开启了深色模式的情况，强制重置护眼模式的样式 */
+@media (prefers-color-scheme: dark) {
+  
+  body.eyecare-mode {
+    /* 1. 强制重置基础背景和文字颜色，防止被系统深色模式覆盖 */
+    background-color: #fdf9f4 !important;
+    color: #5d4a37 !important;
+
+    /* 2. 重置 Bootstrap 变量 (防止 BS5 自动变黑) */
+    --bs-body-color: #5d4a37;
+    --bs-body-bg: #fdf9f4;
+    --bs-body-bg-rgb: 253, 249, 244;
+    --bs-link-color: #c1713d;
+    --bs-link-hover-color: #a0642a;
+    --bs-border-color: #d4b896;
+    
+    /* 3. 修复表格文字颜色 */
+    --bs-table-color: #5d4a37;
+    --bs-table-bg: #fdf9f4;
+    --bs-table-striped-color: #5d4a37;
+    --bs-table-active-color: #5d4a37;
+    --bs-table-hover-color: #5d4a37;
+  }
+
+  /* 4. 修复代码块在系统深色模式下的背景和文字 */
+  body.eyecare-mode pre,
+  body.eyecare-mode code {
+    background-color: #fdf6e3 !important;
+    color: #5d4a37 !important;
+    border-color: #d4b896 !important;
+  }
+
+  /* 5. 修复导航栏链接颜色（防止变成白色） */
+  body.eyecare-mode .navbar-nav .nav-link {
+    color: #5d4a37 !important;
+  }
+  
+  body.eyecare-mode .navbar-nav .nav-link.active,
+  body.eyecare-mode .navbar-nav .nav-link:hover {
+    color: #c1713d !important;
+  }
+
+  /* 6. 修复可能出现的深色边框或 SVG 图标 */
+  body.eyecare-mode .svg-container rect:not([stroke="none"]) {
+    stroke: #5d4a37 !important;
+  }
+  
+  body.eyecare-mode .show-hide-icons {
+    color: #5d4a37 !important;
+  }
+
+  /* 7. 修复表格具体样式 */
+  body.eyecare-mode table,
+  body.eyecare-mode th,
+  body.eyecare-mode td {
+    color: #5d4a37 !important;
+    background-color: transparent !important; /* 让其继承 body 的米色 */
+  }
+}
+
+body.eyecare-mode {
+  .elegant-detail {
+    border-color: #d4b896;
+    background-color: #fdf9f4;
+    box-shadow: 0 2px 10px rgba(193, 113, 61, 0.1);
+  }
+  .elegant-summary {
+    background-color: #faf5f0;
+    color: #5d4a37;
+    &:hover { background-color: #f5ede3; }
+  }
+  .elegant-detail-content {
+    background-color: #fdf9f4; /* 内容底色 */
+    color: #5d4a37;
+    
+    /* 修复：Eyecare Mode 下表格间隔色 */
+    table {
+      color: #5d4a37 !important;
+      background-color: transparent !important;
+    }
+    
+    /* 表格行背景重置 */
+    tr { background-color: transparent !important; }
+    
+    /* 斑马纹/间隔色：强制使用暖色调，防止变黑 */
+    tr:nth-child(even),
+    table.table-striped tbody tr:nth-of-type(odd) {
+      background-color: #f5ede3 !important; /* 柔和米色条纹 */
+      color: #5d4a37 !important;
+    }
+    
+    /* 单元格边框 */
+    td, th { border-color: #e6d0b3 !important; }
+  }
+}

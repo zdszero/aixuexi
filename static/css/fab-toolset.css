@@ -1,0 +1,404 @@
+/* Floating Action Button Styles - Responsive & Small */
+.fab-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  touch-action: none;
+  user-select: none;
+}
+
+/* Main FAB button - Small and responsive */
+.fab-main {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  font-size: 14px;
+  cursor: move;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.fab-main:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+.fab-main:active {
+  transform: scale(0.95);
+}
+
+/* Icon animation */
+.fab-main i {
+  position: absolute;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-main i.fa-times {
+  opacity: 0;
+  transform: rotate(-45deg);
+}
+
+.fab-container.active .fab-main {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.fab-container.active .fab-main i.fa-tools {
+  opacity: 0;
+  transform: rotate(45deg);
+}
+
+.fab-container.active .fab-main i.fa-times {
+  opacity: 1;
+  transform: rotate(0);
+}
+
+/* Tool options container */
+.fab-options {
+  position: absolute;
+  bottom: 60px;
+  right: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-container.active .fab-options {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Individual option buttons */
+.fab-option {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  color: #333;
+  font-size: 13px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(0) translateY(20px);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.fab-container.active .fab-option {
+  transform: scale(1) translateY(0);
+}
+
+.fab-option:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: scale(1.1) translateY(0);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+/* Stagger animation for options */
+.fab-container.active .fab-option:nth-child(1) { transition-delay: 0.05s; }
+.fab-container.active .fab-option:nth-child(2) { transition-delay: 0.1s; }
+.fab-container.active .fab-option:nth-child(3) { transition-delay: 0.15s; }
+.fab-container.active .fab-option:nth-child(4) { transition-delay: 0.2s; }
+.fab-container.active .fab-option:nth-child(5) { transition-delay: 0.25s; }
+.fab-container.active .fab-option:nth-child(6) { transition-delay: 0.3s; }
+
+/* Tooltip */
+.fab-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50%) translateY(-10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10000;
+}
+
+.fab-tooltip.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Dark mode adjustments */
+body.dark-mode .fab-option {
+  background: #2d2d2d;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .fab-option:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Dragging state */
+.fab-container.dragging {
+  transition: none !important;
+}
+
+.fab-container.dragging .fab-main {
+  cursor: grabbing;
+  transform: scale(1.1);
+  opacity: 0.8;
+}
+
+/* Backdrop blur effect for active state */
+.fab-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 9998;
+}
+
+.fab-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Ripple effect */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.fab-main::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(0);
+  opacity: 0;
+}
+
+.fab-main:active::after {
+  animation: ripple 0.6s ease-out;
+}
+
+/* Horizontal layout option */
+.fab-container.horizontal .fab-options {
+  bottom: 0;
+  right: 60px;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+}
+
+.fab-container.horizontal .fab-option {
+  margin-bottom: 0;
+  margin-right: 12px;
+}
+
+.fab-container.horizontal.active .fab-option:nth-child(1) { transition-delay: 0.05s; }
+.fab-container.horizontal.active .fab-option:nth-child(2) { transition-delay: 0.1s; }
+.fab-container.horizontal.active .fab-option:nth-child(3) { transition-delay: 0.15s; }
+.fab-container.horizontal.active .fab-option:nth-child(4) { transition-delay: 0.2s; }
+.fab-container.horizontal.active .fab-option:nth-child(5) { transition-delay: 0.25s; }
+.fab-container.horizontal.active .fab-option:nth-child(6) { transition-delay: 0.3s; }
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+
+/* Extra Large Devices (1920px and up) */
+@media (min-width: 1920px) {
+  .fab-container {
+    bottom: 30px;
+    right: 30px;
+  }
+  
+  .fab-main {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  .fab-option {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+    margin-bottom: 11px;
+  }
+  
+  .fab-options {
+    bottom: 55px;
+  }
+}
+
+/* Large Devices (1024px to 1919px) */
+@media (min-width: 1024px) and (max-width: 1919px) {
+  .fab-container {
+    bottom: 25px;
+    right: 25px;
+  }
+  
+  .fab-main {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+  
+  .fab-option {
+    width: 33px;
+    height: 33px;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  
+  .fab-options {
+    bottom: 50px;
+  }
+}
+
+/* Tablets (768px to 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .fab-container {
+    bottom: 20px;
+    right: 20px;
+  }
+  
+  .fab-main {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+  
+  .fab-option {
+    width: 31px;
+    height: 31px;
+    font-size: 12px;
+    margin-bottom: 9px;
+  }
+  
+  .fab-options {
+    bottom: 48px;
+  }
+}
+
+/* Large Mobile (480px to 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+  .fab-container {
+    bottom: 16px;
+    right: 16px;
+  }
+  
+  .fab-main {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+  
+  .fab-option {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .fab-options {
+    bottom: 46px;
+  }
+}
+
+/* Ultra-wide Desktop (2560px and up) */
+@media (min-width: 2560px) {
+  .fab-container {
+    bottom: 35px;
+    right: 35px;
+  }
+  
+  .fab-main {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+  
+  .fab-option {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  
+  .fab-options {
+    bottom: 58px;
+  }
+}
+
+/* Landscape orientation adjustments for mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .fab-container {
+    bottom: 10px;
+    right: 10px;
+  }
+  
+  .fab-main {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+  
+  .fab-option {
+    width: 26px;
+    height: 26px;
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+}
+
+/* High DPI / Retina displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .fab-main {
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+  
+  .fab-option {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .fab-main:hover {
+    transform: none;
+  }
+  
+  .fab-option:hover {
+    transform: scale(1) translateY(0);
+  }
+  
+  .fab-container {
+    bottom: 18px;
+    right: 18px;
+  }
+}

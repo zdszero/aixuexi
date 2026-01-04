@@ -1,0 +1,107 @@
+{{/* layouts/shortcodes/svg_watermark.html */}}
+
+{{ $svgFile := "" }}
+{{ $widthArg := "" }}
+{{ $nameArg := "" }}
+{{ $watermarkText := "" }}
+
+{{/* Ensure that at least the SVG file path is provided */}}
+{{ if ge (len .Params) 1 }}
+  {{ $svgFile = .Get 0 }}
+{{ else }}
+  {{ errorf "The 'svg' shortcode requires at least one argument: the path to the SVG file. Usage: {{< svg \"path/to/file.svg\" [\"width\"] [\"caption\"] [\"watermark\"] >}}" }}
+  {{ return }}
+{{ end }}
+
+{{ if ge (len .Params) 2 }}
+  {{ $widthArg = .Get 1 }}
+{{ end }}
+
+{{ if ge (len .Params) 3 }}
+  {{ $nameArg = .Get 2 }}
+{{ end }}
+
+{{ if ge (len .Params) 4 }}
+  {{ $watermarkText = .Get 3 }}
+{{ else }}
+  {{/* Default watermark */}}
+  {{ $watermarkText = "计算机考研杂货铺" }}
+{{ end }}
+
+<div class="svg-wrapper">
+  <div
+    class="svg-container"
+    style="position: relative;
+           {{ if and $widthArg (ne $widthArg "") }}
+           width: {{ $widthArg | safeCSS }};
+           {{ end }}
+           height: auto;"
+  >
+    {{- with $svgFile -}}
+      {{- $svgContent := readFile . -}}
+      {{- if $svgContent -}}
+
+        {{/* Inject watermark into SVG */}}
+        {{ $svgContent = replaceRE
+          `(<svg[^>]*>)`
+          (printf
+`$1
+<defs>
+  <pattern
+    id="watermark-pattern"
+    x="0" y="0"
+    width="300" height="300"
+    patternUnits="userSpaceOnUse"
+    patternTransform="rotate(-45)">
+    <text
+      x="0" y="150"
+      fill="rgba(0,0,0,0.10)"
+      font-size="24"
+      font-family="Arial, sans-serif"
+      font-weight="bold">
+      %s
+    </text>
+  </pattern>
+</defs>
+
+<!-- Watermark layer: does NOT affect original SVG strokes -->
+<rect
+  x="0" y="0"
+  width="100%%" height="100%%"
+  fill="url(#watermark-pattern)"
+  fill-opacity="1"
+  stroke="none"
+  shape-rendering="crispEdges"
+  pointer-events="none"
+/>
+`
+          $watermarkText
+          )
+          $svgContent
+        }}
+
+        {{ $svgContent | safeHTML }}
+
+      {{- else -}}
+        {{ errorf "SVG file not found or unreadable: %s" . }}
+      {{- end -}}
+    {{- end -}}
+  </div>
+
+  {{ if and $nameArg (ne $nameArg "") }}
+    <div
+      class="svg-caption"
+      style="
+        text-align: center;
+        margin-top: 0.5em;
+        font-size: 0.8em;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont,
+                     'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+                     'Open Sans', 'Helvetica Neue', sans-serif;
+      "
+    >
+      {{ $nameArg | markdownify | safeHTML }}
+    </div>
+  {{ end }}
+</div>
+

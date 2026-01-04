@@ -1,0 +1,11 @@
+/public
+drawio/.$*
+resources/
+node_modules/
+package-lock.json
+.hugo_build.lock
+*.bkp
+*.dtmp
+.ds_store
+*.swp
+*.Identifier

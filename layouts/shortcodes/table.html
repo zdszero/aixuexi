@@ -1,0 +1,28 @@
+{{ $header := .Get "header" }}
+{{ $rows := .Get "rows" }}
+<table>
+  {{ if $header }}
+  <thead>
+    <tr>
+      {{ range split $header "|" }}
+      <th>{{ . }}</th>
+      {{ end }}
+    </tr>
+  </thead>
+  {{ end }}
+  <tbody>
+    {{ range $i, $row := split $rows ";" }}
+    <tr>
+      {{ range $cell := split $row "|" }}
+        {{ if hasPrefix $cell "colspan=" }}
+          {{ $parts := split $cell "=" }}
+          <td colspan="{{ index $parts 1 }}">{{ index $parts 2 }}</td>
+        {{ else }}
+          <td>{{ $cell }}</td>
+        {{ end }}
+      {{ end }}
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+

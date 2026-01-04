@@ -1,0 +1,89 @@
+digraph TransformerBlocks {
+    rankdir=TB;
+    nodesep=0.6;
+    ranksep=0.8;
+    fontname="Helvetica";
+    bgcolor="transparent";
+
+    node [
+        shape=box,
+        style="rounded,filled",
+        fontname="Helvetica",
+        fontsize=10
+    ];
+
+    edge [
+        arrowhead=normal,
+        arrowsize=0.7
+    ];
+
+    /* ================= Left: Post-LN ================= */
+    subgraph cluster_postln {
+        label="Post-LayerNorm (Original Transformer)";
+        labelloc=t;
+        fontsize=12;
+        style=rounded;
+        color=gray;
+
+        x_l_post   [label="x1", fillcolor="#eeeeee"];
+
+        mha_post   [label="Multi-Head\nAttention", fillcolor="#f4c430"];
+        add1_post  [label="addition", fillcolor="#ffffff"];
+        ln1_post   [label="Layer Norm", fillcolor="#9acd32"];
+
+        ffn_post   [label="FFN", fillcolor="#87ceeb"];
+        add2_post  [label="addition", fillcolor="#ffffff"];
+        ln2_post   [label="Layer Norm", fillcolor="#9acd32"];
+
+        x_lp1_post [label="x2", fillcolor="#eeeeee"];
+
+        /* flow */
+        x_l_post  -> mha_post;
+        mha_post  -> add1_post;
+        x_l_post  -> add1_post;
+
+        add1_post -> ln1_post;
+        ln1_post  -> ffn_post;
+
+        ffn_post  -> add2_post;
+        ln1_post  -> add2_post;
+
+        add2_post -> ln2_post;
+        ln2_post  -> x_lp1_post;
+    }
+
+    /* ================= Right: Pre-LN ================= */
+    subgraph cluster_preln {
+        label="Pre-LayerNorm (Modern GPT-style)";
+        labelloc=t;
+        fontsize=12;
+        style=rounded;
+        color=gray;
+
+        x_l_pre   [label="x1", fillcolor="#eeeeee"];
+
+        ln1_pre   [label="Layer Norm", fillcolor="#9acd32"];
+        mha_pre   [label="Multi-Head\nAttention", fillcolor="#f4c430"];
+        add1_pre  [label="addition", fillcolor="#ffffff"];
+
+        ln2_pre   [label="Layer Norm", fillcolor="#9acd32"];
+        ffn_pre   [label="FFN", fillcolor="#87ceeb"];
+        add2_pre  [label="addition", fillcolor="#ffffff"];
+
+        x_lp1_pre [label="x2", fillcolor="#eeeeee"];
+
+        /* flow */
+        x_l_pre  -> ln1_pre;
+        ln1_pre  -> mha_pre;
+        mha_pre  -> add1_pre;
+        x_l_pre  -> add1_pre;
+
+        add1_pre -> ln2_pre;
+        ln2_pre  -> ffn_pre;
+        ffn_pre  -> add2_pre;
+        add1_pre -> add2_pre;
+
+        add2_pre -> x_lp1_pre;
+    }
+}
+

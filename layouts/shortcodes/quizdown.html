@@ -1,0 +1,9 @@
+{{ if not (.Page.Scratch.Get "quizdown-included") }}
+  {{ .Page.Scratch.Set "quizdown-included" true }}
+    <script src="https://cdn.jsdmirror.com/npm/quizdown@latest/public/build/quizdown.js"></script>
+    <script>quizdown.init();</script>
+{{ end }}
+{{ $_hugo_config := `{ "version": 1 }` }}
+<div class='quizdown'>
+  {{ .Inner }}
+</div>

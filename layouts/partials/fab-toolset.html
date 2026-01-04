@@ -1,0 +1,32 @@
+<!-- Floating Action Button Tool Set -->
+<div id="fab-container" class="fab-container">
+  <!-- Main FAB button -->
+  <button id="fab-main" class="fab-main" aria-label="Tool Set">
+    <i class="fas fa-tools"></i>
+    <i class="fas fa-times"></i>
+  </button>
+  
+  <!-- Tool options that appear when FAB is clicked -->
+  <div class="fab-options">
+    <button class="fab-option" data-action="toggleValidateSelection" title="开启/关闭 选项选择检查">
+      <i class="fas fa-check-circle"></i>
+    </button>
+    <button class="fab-option" data-action="scrollTop" title="移动到顶端">
+      <i class="fas fa-arrow-up"></i>
+    </button>
+    <button class="fab-option" data-action="togglePinNavbar" title="固定/取消固定导航栏">
+      <i class="fas fa-thumbtack"></i>
+    </button>
+    <button class="fab-option" data-action="refreshChoices" title="刷新所有选项">
+      <i class="fas fa-redo"></i>
+    </button>
+    <button class="fab-option" data-action="showAnswers" title="显示本页所有答案">
+      <i class="fas fa-eye"></i>
+    </button>
+    <button class="fab-option" data-action="openFeedback" title="打开反馈页面">
+      <i class="fas fa-comment-dots"></i>
+    </button>
+  </div>
+</div>
+<!-- Optional: Tooltip for showing button labels -->
+<div id="fab-tooltip" class="fab-tooltip"></div>

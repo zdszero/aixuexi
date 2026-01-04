@@ -1,0 +1,351 @@
+{{ $tag := split (.Get "tag" | default "") "," }}
+
+{{ $prev := default 0 (.Page.Scratch.Get "answerCount") }}
+{{ $count := add (int $prev) 1 }}
+{{ .Page.Scratch.Set "answerCount" $count }}
+
+{{/* stable per-file + per-answer id */}}
+{{ $answerID := printf "answer-%s-%d" .Page.File.UniqueID $count }}
+
+{{ $path := lower .Page.RelPermalink }}
+{{ $tagBase := "/study_methods/tags/408quiz/" }}
+
+{{ if (in $path "408quiz") }}
+  {{ $tagBase := "/study_methods/tags/408quiz/" }}
+{{ else if (in $path "exercise") }}
+  {{ $tagBase = "/study_methods/tags/408exercise/" }}
+{{ else if (in $path "math_extra") }}
+  {{ $tagBase = "/study_methods/tags/math_extra/" }}
+{{ else if (in $path "math_old") }}
+  {{ $tagBase = "/study_methods/tags/math_old/" }}
+{{ else if (in $path "math") }}
+  {{ $tagBase = "/study_methods/tags/math/" }}
+{{ else if (in $path "english") }}
+  {{ $tagBase = "/study_methods/tags/english/" }}
+{{ else if (in $path "politics") }}
+  {{ $tagBase = "/study_methods/tags/politics/" }}
+{{ end }}
+
+<div class="answer-container td-max-width-on-larger-screens" 
+     id="quiz-{{ $answerID }}"
+     data-tags="{{ delimit $tag "," }}"
+     data-page-url="{{ .Page.Permalink }}"
+     data-page-title="{{ .Page.Title }}">
+  {{ if gt (len $tag) 0 }}
+    <div class="quiz-tag-container">
+      {{ range $tag }}
+        {{ if ne . "" }}
+        {{ $safeTag := lower (replace . "/" "-") }}
+        {{ $safeTag = replace $safeTag "，" "" }}
+        {{ $safeTag = replace $safeTag "。" "" }}
+        {{ $safeTag = replace $safeTag "、" "" }}
+        {{ $safeTag = replace $safeTag "；" "" }}
+        {{ $safeTag = replace $safeTag "：" "" }}
+        {{ $safeTag = replace $safeTag "（" "" }}
+        {{ $safeTag = replace $safeTag "）" "" }}
+        <a href="{{ $tagBase }}/#{{ $safeTag }}" class="quiz-tag">
+          <span class="tag-icon"><i class="fa-solid fa-tag"></i></span>{{ . }}
+        </a>
+        {{ end }}
+      {{ end }}
+    </div>
+  {{ end }}
+  
+  <div class="quiz-actions">
+    <button class="toggle-btn" onclick="toggleSolutionDetail(this, '{{ $answerID }}')">查看答案与解析</button>
+    <button class="collect-btn" onclick="collectAnswerQuiz('{{ $answerID }}', this)" title="收藏此题">
+      <i class="fa-regular fa-bookmark"></i> 收藏
+    </button>
+  </div>
+</div>
+
+<div class="solution-detail td-max-width-on-larger-screens" id="solution-{{ $answerID }}" style="display: none;">
+  {{ .Inner | markdownify | safeHTML }}
+</div>
+
+{{- if not ($.Page.Scratch.Get "quiz-solution-flag") -}}
+{{- $.Page.Scratch.Set "quiz-solution-flag" true -}}
+<link rel="stylesheet" href="/css/quiz-common.css">
+<style>
+.answer-container {
+  margin: 15px 0;
+  padding: 5px;
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.solution-detail {
+  display: none;
+  background-color: #e9f5ff;
+  padding: 15px;
+  border-radius: 6px;
+  font-size: 1em;
+  line-height: 1.6;
+  border: 1px solid #b3d7ff;
+  color: #333;
+  margin-top: 10px;
+}
+
+.solution-detail strong {
+  color: #0056b3;
+  font-weight: 600;
+}
+
+/* Dark mode adjustments */
+.dark-mode .answer-container {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.dark-mode .solution-detail {
+  background-color: #2a2a2a;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+/* Eyecare mode adjustments */
+.eyecare-mode .answer-container {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+</style>
+
+<script src="/js/quiz.js" defer></script>
+
+<script>
+// Initialize QuizDB if not already initialized (shared with choice shortcode)
+if (typeof window.quizDB === 'undefined') {
+  class QuizDB {
+    constructor() {
+      this.dbName = 'QuizCollectionsDB';
+      this.storeName = 'quizzes';
+      this.version = 1;
+      this.db = null;
+    }
+
+    async init() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(this.dbName, this.version);
+
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          this.db = request.result;
+          resolve(this.db);
+        };
+
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(this.storeName)) {
+            const objectStore = db.createObjectStore(this.storeName, { keyPath: 'id' });
+            objectStore.createIndex('collectedAt', 'collectedAt', { unique: false });
+            objectStore.createIndex('tags', 'tags', { unique: false, multiEntry: true });
+            objectStore.createIndex('type', 'type', { unique: false });
+          }
+        };
+      });
+    }
+
+    async add(quizData) {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readwrite');
+        const objectStore = transaction.objectStore(this.storeName);
+        const request = objectStore.add(quizData);
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async remove(id) {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readwrite');
+        const objectStore = transaction.objectStore(this.storeName);
+        const request = objectStore.delete(id);
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async get(id) {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readonly');
+        const objectStore = transaction.objectStore(this.storeName);
+        const request = objectStore.get(id);
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async getAll() {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readonly');
+        const objectStore = transaction.objectStore(this.storeName);
+        const request = objectStore.getAll();
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async getAllIds() {
+      if (!this.db) await this.init();
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([this.storeName], 'readonly');
+        const objectStore = transaction.objectStore(this.storeName);
+        const request = objectStore.getAllKeys();
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+  }
+
+  window.quizDB = new QuizDB();
+}
+
+function toggleSolutionDetail(button, answerID) {
+  const solutionDiv = document.getElementById('solution-' + answerID);
+  if (solutionDiv) {
+    if (solutionDiv.style.display === "none" || solutionDiv.style.display === "") {
+      solutionDiv.style.display = "block";
+      button.textContent = "隐藏答案与解析";
+    } else {
+      solutionDiv.style.display = "none";
+      button.textContent = "查看答案与解析";
+    }
+  }
+}
+
+async function collectAnswerQuiz(answerID, button) {
+  const container = document.getElementById('quiz-' + answerID);
+  if (!container) return;
+  
+  // Collect question elements in correct order
+  let prev = container.previousElementSibling;
+  const questionElements = [];
+  let quizNum = '';
+  
+  // Traverse backwards to collect all question parts
+  while (prev && prev.tagName !== "H5") {
+    questionElements.unshift(prev); // Add to beginning to maintain order
+    prev = prev.previousElementSibling;
+  }
+  
+  // Get quiz number from H5
+  if (prev && prev.tagName === "H5") {
+    quizNum = prev.innerText.trim();
+  }
+  
+  // Build question content properly
+  const question = questionElements.map(el => {
+    // Clean up the HTML while preserving structure
+    const clone = el.cloneNode(true);
+    
+    // Remove any unwanted elements (buttons, scripts, etc.)
+    clone.querySelectorAll('button, script, style').forEach(node => node.remove());
+    
+    // Use outerHTML to preserve the wrapper tags like <ol>, <ul>, <p>, etc.
+    return clone.outerHTML.trim();
+  }).filter(content => content.length > 0); // Remove empty elements
+  
+  // Extract explanation/solution
+  const solutionDiv = document.getElementById('solution-' + answerID);
+  let explanation = '';
+  if (solutionDiv) {
+    const clone = solutionDiv.cloneNode(true);
+    // Remove unwanted elements from solution
+    clone.querySelectorAll('button, script, style').forEach(node => node.remove());
+    explanation = clone.innerHTML.trim();
+  }
+
+  // Get page URL and deduce subject
+  const pageUrl = container.dataset.pageUrl;
+  const subject = getSubjectFromUrl(pageUrl); // NEW: Deduce subject from URL
+  
+  const quizData = {
+    id: answerID,
+    type: 'answer',
+    quizNumber: quizNum,
+    question: question.length > 0 ? question : ['题目'], // Array of HTML strings
+    questionText: question.map(html => {
+      // Also store plain text version for search/display
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      return temp.textContent.trim();
+    }).join('\n'),
+    answer: '',
+    explanation: explanation,
+    tags: container.dataset.tags,
+    subject: subject,
+    pageUrl: container.dataset.pageUrl + `/#${quizNum}`,
+    pageTitle: container.dataset.pageTitle + ` 第 ${quizNum} 题`,
+    collectedAt: new Date().toISOString()
+  };
+  
+  try {
+    const existing = await window.quizDB.get(answerID);
+    
+    if (existing) {
+      await window.quizDB.remove(answerID);
+      button.classList.remove('collected');
+      button.innerHTML = '<i class="fa-regular fa-bookmark"></i> 收藏';
+      button.title = '收藏此题';
+      showNotification('已取消收藏');
+    } else {
+      await window.quizDB.add(quizData);
+      button.classList.add('collected');
+      button.innerHTML = '<i class="fa-solid fa-bookmark"></i> 已收藏';
+      button.title = '取消收藏';
+      showNotification('已添加到收藏');
+    }
+  } catch (error) {
+    console.error('Error managing answer quiz collection:', error);
+    showNotification('操作失败，请重试');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+  try {
+    await window.quizDB.init();
+    const collectedIds = await window.quizDB.getAllIds();
+    
+    document.querySelectorAll('.answer-container .collect-btn').forEach(button => {
+      const container = button.closest('.answer-container');
+      if (container && collectedIds.includes(container.id.replace('quiz-', ''))) {
+        button.classList.add('collected');
+        button.innerHTML = '<i class="fa-solid fa-bookmark"></i> 已收藏';
+        button.title = '取消收藏';
+      }
+    });
+  } catch (error) {
+    console.error('Error initializing answer quiz collections:', error);
+  }
+});
+
+if (!document.getElementById('quiz-animations')) {
+  const style = document.createElement('style');
+  style.id = 'quiz-animations';
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+}
+</script>
+{{- end -}}

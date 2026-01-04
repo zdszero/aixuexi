@@ -1,0 +1,192 @@
+{{- $isBlock := eq .Type "block" }}
+
+{{- $macros := dict
+  "\\d"         "\\mathrm{d}"
+
+  "\\da"        "\\mathrm{d}a"
+  "\\db"        "\\mathrm{d}b"
+  "\\dc"        "\\mathrm{d}c"
+  "\\dd"        "\\mathrm{d}d"
+  "\\de"        "\\mathrm{d}e"
+  "\\df"        "\\mathrm{d}f"
+  "\\dg"        "\\mathrm{d}g"
+  "\\dh"        "\\mathrm{d}h"
+  "\\di"        "\\mathrm{d}i"
+  "\\dj"        "\\mathrm{d}j"
+  "\\dk"        "\\mathrm{d}k"
+  "\\dl"        "\\mathrm{d}l"
+  "\\dm"        "\\mathrm{d}m"
+  "\\dn"        "\\mathrm{d}n"
+  "\\do"        "\\mathrm{d}o"
+  "\\dp"        "\\mathrm{d}p"
+  "\\dq"        "\\mathrm{d}q"
+  "\\dr"        "\\mathrm{d}r"
+  "\\ds"        "\\mathrm{d}s"
+  "\\dS"        "\\mathrm{d}S"
+  "\\dt"        "\\mathrm{d}t"
+  "\\du"        "\\mathrm{d}u"
+  "\\dv"        "\\mathrm{d}v"
+  "\\dw"        "\\mathrm{d}w"
+  "\\dx"        "\\mathrm{d}x"
+  "\\dy"        "\\mathrm{d}y"
+  "\\dz"        "\\mathrm{d}z"
+
+  "\\pd"        "\\partial"
+  "\\pda"       "\\partial{a}"
+  "\\pdb"       "\\partial{b}"
+  "\\pdc"       "\\partial{c}"
+  "\\pdd"       "\\partial{d}"
+  "\\pde"       "\\partial{e}"
+  "\\pdf"       "\\partial{f}"
+  "\\pdg"       "\\partial{g}"
+  "\\pdh"       "\\partial{h}"
+  "\\pdi"       "\\partial{i}"
+  "\\pdj"       "\\partial{j}"
+  "\\pdk"       "\\partial{k}"
+  "\\pdl"       "\\partial{l}"
+  "\\pdm"       "\\partial{m}"
+  "\\pdn"       "\\partial{n}"
+  "\\pdo"       "\\partial{o}"
+  "\\pdp"       "\\partial{p}"
+  "\\pdq"       "\\partial{q}"
+  "\\pdr"       "\\partial{r}"
+  "\\pds"       "\\partial{s}"
+  "\\pdt"       "\\partial{t}"
+  "\\pdu"       "\\partial{u}"
+  "\\pdv"       "\\partial{v}"
+  "\\pdw"       "\\partial{w}"
+  "\\pdx"       "\\partial{x}"
+  "\\pdy"       "\\partial{y}"
+  "\\pdz"       "\\partial{z}"
+
+  "\\dda"       "\\frac{\\d}{\\da}"
+  "\\ddb"       "\\frac{\\d}{\\db}"
+  "\\ddc"       "\\frac{\\d}{\\dc}"
+  "\\ddd"       "\\frac{\\d}{\\dd}"
+  "\\dde"       "\\frac{\\d}{\\de}"
+  "\\ddf"       "\\frac{\\d}{\\df}"
+  "\\ddg"       "\\frac{\\d}{\\dg}"
+  "\\ddh"       "\\frac{\\d}{\\dh}"
+  "\\ddi"       "\\frac{\\d}{\\di}"
+  "\\ddj"       "\\frac{\\d}{\\dj}"
+  "\\ddk"       "\\frac{\\d}{\\dk}"
+  "\\ddl"       "\\frac{\\d}{\\dl}"
+  "\\ddm"       "\\frac{\\d}{\\dm}"
+  "\\ddn"       "\\frac{\\d}{\\dn}"
+  "\\ddo"       "\\frac{\\d}{\\do}"
+  "\\ddp"       "\\frac{\\d}{\\dp}"
+  "\\ddq"       "\\frac{\\d}{\\dq}"
+  "\\ddr"       "\\frac{\\d}{\\dr}"
+  "\\dds"       "\\frac{\\d}{\\ds}"
+  "\\ddt"       "\\frac{\\d}{\\dt}"
+  "\\ddu"       "\\frac{\\d}{\\du}"
+  "\\ddv"       "\\frac{\\d}{\\dv}"
+  "\\ddw"       "\\frac{\\d}{\\dw}"
+  "\\ddx"       "\\frac{\\d}{\\dx}"
+  "\\ddy"       "\\frac{\\d}{\\dy}"
+  "\\ddz"       "\\frac{\\d}{\\dz}"
+
+  "\\ppa"       "\\frac{\\pd}{\\pda}"
+  "\\ppb"       "\\frac{\\pd}{\\pdb}"
+  "\\ppc"       "\\frac{\\pd}{\\pdc}"
+  "\\ppd"       "\\frac{\\pd}{\\pdd}"
+  "\\ppe"       "\\frac{\\pd}{\\pde}"
+  "\\ppf"       "\\frac{\\pd}{\\pdf}"
+  "\\ppg"       "\\frac{\\pd}{\\pdg}"
+  "\\pph"       "\\frac{\\pd}{\\pdh}"
+  "\\ppi"       "\\frac{\\pd}{\\pdi}"
+  "\\ppj"       "\\frac{\\pd}{\\pdj}"
+  "\\ppk"       "\\frac{\\pd}{\\pdk}"
+  "\\ppl"       "\\frac{\\pd}{\\pdl}"
+  "\\ppm"       "\\frac{\\pd}{\\pdm}"
+  "\\ppn"       "\\frac{\\pd}{\\pdn}"
+  "\\ppo"       "\\frac{\\pd}{\\pdo}"
+  "\\ppp"       "\\frac{\\pd}{\\pdp}"
+  "\\ppq"       "\\frac{\\pd}{\\pdq}"
+  "\\ppr"       "\\frac{\\pd}{\\pdr}"
+  "\\pps"       "\\frac{\\pd}{\\pds}"
+  "\\ppt"       "\\frac{\\pd}{\\pdt}"
+  "\\ppu"       "\\frac{\\pd}{\\pdu}"
+  "\\ppv"       "\\frac{\\pd}{\\pdv}"
+  "\\ppw"       "\\frac{\\pd}{\\pdw}"
+  "\\ppx"       "\\frac{\\pd}{\\pdx}"
+  "\\ppy"       "\\frac{\\pd}{\\pdy}"
+  "\\ppz"       "\\frac{\\pd}{\\pdz}"
+
+  "\\ppaa"      "\\frac{\\partial^2}{\\partial a^2}"
+  "\\ppbb"      "\\frac{\\partial^2}{\\partial b^2}"
+  "\\ppxx"      "\\frac{\\partial^2}{\\partial x^2}"
+  "\\ppyy"      "\\frac{\\partial^2}{\\partial y^2}"
+  "\\ppzz"      "\\frac{\\partial^2}{\\partial z^2}"
+  "\\ppxy"      "\\frac{\\partial^2}{\\partial x\\,\\partial y}"
+  "\\ppxz"      "\\frac{\\partial^2}{\\partial x\\,\\partial z}"
+  "\\ppyz"      "\\frac{\\partial^2}{\\partial y\\,\\partial z}"
+
+  "\\vi"        "\\mathbf{i}"
+  "\\vj"        "\\mathbf{j}"
+  "\\vk"        "\\mathbf{k}"
+  "\\grad"      "\\nabla"
+
+  "\\e"         "\\mathrm{e}"
+  "\\arccot"    "\\operatorname{arccot}"
+  "\\arcsec"    "\\operatorname{arcsec}"
+  "\\arccsc"    "\\operatorname{arccsc}"
+  "\\Cov"       "\\operatorname{Cov}"
+  "\\Var"       "\\operatorname{Var}"
+  "\\Std"       "\\operatorname{Std}"
+
+  "\\R"         "\\mathbb{R}"
+  "\\N"         "\\mathbb{N}"
+  "\\Z"         "\\mathbb{Z}"
+  "\\Q"         "\\mathbb{Q}"
+  "\\C"         "\\mathbb{C}"
+  "\\E"         "\\mathbb{E}"
+
+  "\\abs"       "\\left|#1\\right|"
+  "\\norm"      "\\left\\|#1\\right\\|"
+  "\\set"       "\\left\\{#1\\right\\}"
+
+  "\\lrang"     "\\left\\langle #1 \\right\\rangle"
+  "\\ceil"      "\\left\\lceil #1 \\right\\rceil"
+  "\\floor"     "\\left\\lfloor #1 \\right\\rfloor"
+
+  "\\argmax"    "\\operatorname*{arg\\,max}"
+  "\\argmin"    "\\operatorname*{arg\\,min}"
+
+  "\\sgn"       "\\operatorname{sgn}"
+  "\\rank"      "\\operatorname{rank}"
+  "\\trace"     "\\operatorname{tr}"
+  "\\diag"      "\\operatorname{diag}"
+  "\\Span"      "\\operatorname{span}"
+}}
+
+
+{{- $opts := dict
+  "output" "html"
+  "displayMode" $isBlock
+  "macros" $macros
+}}
+
+
+{{- with try (transform.ToMath .Inner $opts) }}
+
+  {{- with .Err }}
+    {{- $preview := $.Inner }}
+    {{- if gt (len $.Inner) 100 }}
+      {{- $preview = printf "%s..." (substr $.Inner 0 100) }}
+    {{- end }}
+    {{- errorf "Unable to render mathematical markup to HTML using the transform.ToMath function. The KaTeX display engine threw the following error: %s\n\nProblematic content: %s\n\nSee %s" . $preview $.Position }}
+  {{- else }}
+
+    {{- if $isBlock }}
+      <div class="td-max-width-on-larger-screens">
+        {{ .Value }}
+      </div>
+    {{- else }}
+      {{ .Value }}
+    {{- end }}
+
+    {{- $.Page.Store.Set "hasMath" true }}
+  {{- end }}
+{{- end }}
+

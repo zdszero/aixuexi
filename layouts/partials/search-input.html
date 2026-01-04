@@ -1,0 +1,133 @@
+{{ .Scratch.Set "docsy-search" 0 -}}
+
+{{/* Offline Search */}}
+{{ if .Site.Params.offlineSearch -}}
+{{ .Scratch.Add "docsy-search" 1 -}}
+{{ $offlineSearchIndex := resources.Get "json/offline-search-index.json" | resources.ExecuteAsTemplate "offline-search-index.json" . -}}
+{{ if hugo.IsProduction -}}
+j{{ $offlineSearchIndex = $offlineSearchIndex | fingerprint "md5" -}}
+{{ end -}}
+{{ $offlineSearchLink := $offlineSearchIndex.RelPermalink -}}
+<div class="td-search td-search--offline">
+  <div class="td-search__icon"></div>
+  <input
+    type="search"
+    class="td-search__input form-control"
+    placeholder="{{ T "ui_search" }}"
+    aria-label="{{ T "ui_search" }}"
+    autocomplete="off"
+    data-offline-search-index-json-src="{{ $offlineSearchLink }}"
+    data-offline-search-base-href="/"
+    data-offline-search-max-results="{{ .Site.Params.offlineSearchMaxResults | default 10 }}"
+  >
+</div>
+{{- end -}}
+
+{{/* Bing Search - Enhanced */}}
+{{ if .Site.Params.bingSearch -}}
+{{ .Scratch.Add "docsy-search" 1 -}}
+{{ $bing := resources.Get "css/search-input.css" | minify | fingerprint }}
+<link rel="stylesheet" href="{{ $bing.RelPermalink }}">
+
+<div class="td-search td-search--bing">
+  <div class="td-search__wrapper">
+    <input
+      type="search"
+      id="bing-search-input"
+      class="td-search__input form-control td-search-input--bing"
+      placeholder="{{ T "ui_search" }} (Bing)"
+      aria-label="{{ T "ui_search" }} via Bing"
+      autocomplete="off"
+    >
+    <button
+      type="button"
+      id="bing-search-button"
+      class="td-search__button"
+      aria-label="Execute search"
+      title="Search"
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" fill="currentColor"/>
+      </svg>
+    </button>
+    <button
+      type="button"
+      id="bing-clear-button"
+      class="td-search__clear"
+      aria-label="Clear search"
+      title="Clear"
+      style="display: none;"
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" fill="currentColor"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+{{- if not ($.Page.Scratch.Get "search-input-flag") -}}
+<script>
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('bing-search-input');
+    const searchButton = document.getElementById('bing-search-button');
+    const clearButton = document.getElementById('bing-clear-button');
+    
+    if (!searchInput || !searchButton) return;
+
+    function performSearch() {
+      const searchQuery = searchInput.value.trim();
+      if (searchQuery) {
+        const bingQuery = 'site:www.csgraduates.com ' + searchQuery;
+        const bingUrl = 'https://cn.bing.com/search?q=' + encodeURIComponent(bingQuery);
+        window.open(bingUrl, '_blank');
+      }
+    }
+
+    function toggleClearButton() {
+      if (clearButton) {
+        clearButton.style.display = searchInput.value.length > 0 ? 'flex' : 'none';
+      }
+    }
+
+    // Search on Enter key
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performSearch();
+      }
+    });
+
+    // Search on button click
+    searchButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      performSearch();
+    });
+
+    // Clear button functionality
+    if (clearButton) {
+      clearButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        searchInput.value = '';
+        searchInput.focus();
+        toggleClearButton();
+      });
+    }
+
+    // Toggle clear button visibility
+    searchInput.addEventListener('input', toggleClearButton);
+    
+    // Initial state
+    toggleClearButton();
+  });
+})();
+</script>
+{{- $.Page.Scratch.Set "search-input-flag" true -}}
+{{- end -}}
+
+{{- end -}}
+
+{{/* Warning for multiple search configurations */}}
+{{ if gt (.Scratch.Get "docsy-search") 1 -}}
+{{ warnf `You have more than one site-search option configured: choose only one. For details, see https://www.docsy.dev/docs/adding-content/search.` -}}
+{{ end -}}

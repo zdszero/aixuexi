@@ -1,0 +1,951 @@
+{{ $labels := slice "A" "B" "C" "D" "E" }}
+{{ $lines := split .Inner "\n" }}
+{{ $options := slice }}
+{{ $answer := "" }}
+{{ $explanation := "" }}
+
+{{ $prev := default 0 (.Page.Scratch.Get "choiceCount") }}
+{{ $count := add (int $prev) 1 }}
+{{ .Page.Scratch.Set "choiceCount" $count }}
+
+{{/* stable per-file + per-choice id */}}
+{{ $choiceID := printf "choice-%s-%d" .Page.File.UniqueID $count }}
+
+{{ $num := .Get "num" | default 4 }}
+{{ $tag := split (.Get "tag" | default "") "," }}
+{{ $inline := .Get "inline" | default "false" }}
+{{ $concise := .Get "concise" | default "false" }}
+{{ $multiple := .Get "multiple" | default "false" }}  {{/* 新增：是否是多选题 */}}
+
+{{ if eq $inline "false" }}
+  {{ range $index, $line := $lines }}
+    {{ $trimmed := trim $line " \r" }}
+    {{ if and (ne $trimmed "") (lt $index (add $num 1)) }}
+      {{ $option := replaceRE `^([ABCDEabcde]\.\s+)?` "" $trimmed }}
+      {{ $options = $options | append $option }}
+    {{ else if eq $index (add $num 1) }}
+      {{ $answer = $trimmed }}
+    {{ else if ge $index (add $num 2) }}
+      {{ $explanation = print $explanation "\n" $line }}
+    {{ end }}
+  {{ end }}
+{{ else }}
+  {{ range seq 1 $num }}
+    {{ $options = $options | append "" }}
+  {{ end }}
+  {{ range $index, $line := $lines }}
+    {{ $trimmed := trim $line " \r" }}
+    {{ if eq $index 1 }}
+      {{ $answer = $trimmed }}
+    {{ else if gt $index 1 }}
+      {{ $explanation = print $explanation "\n" $line }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+
+{{ $path := lower .Page.RelPermalink }}
+{{ $tagBase := "/study_methods/tags/408quiz/" }}
+
+{{ if (in $path "408quiz") }}
+  {{ $tagBase := "/study_methods/tags/408quiz/" }}
+{{ else if (in $path "exercise") }}
+  {{ $tagBase = "/study_methods/tags/408exercise/" }}
+{{ else if (in $path "math_old") }}
+  {{ $tagBase = "/study_methods/tags/math_old/" }}
+{{ else if (in $path "math_extra") }}
+  {{ $tagBase = "/study_methods/tags/math_extra/" }}
+{{ else if (in $path "math") }}
+  {{ $tagBase = "/study_methods/tags/math/" }}
+{{ else if (in $path "english") }}
+  {{ $tagBase = "/study_methods/tags/english/" }}
+{{ else if (in $path "politics") }}
+  {{ $tagBase = "/study_methods/tags/politics/" }}
+{{ end }}
+
+{{ $.Scratch.Set $choiceID $answer }}
+<div class="choice-container td-max-width-on-larger-screens" 
+     data-answer="{{ $answer }}" 
+     data-tags="{{ delimit $tag "," }}"
+     data-page-url="{{ .Page.Permalink }}"
+     data-page-title="{{ .Page.Title }}"
+     data-multiple="{{ $multiple }}"  {{/* 新增：多选题标识 */}}
+     id="quiz-{{ $choiceID }}">
+  
+{{ if gt (len $tag) 0 }}
+  <div class="quiz-tag-container">
+    {{ range $tag }}
+      {{ if ne . "" }}
+      {{ $safeTag := lower (replace . "/" "-") }}
+      {{ $safeTag = replace $safeTag "，" "" }}
+      {{ $safeTag = replace $safeTag "。" "" }}
+      {{ $safeTag = replace $safeTag "、" "" }}
+      {{ $safeTag = replace $safeTag "；" "" }}
+      {{ $safeTag = replace $safeTag "：" "" }}
+      {{ $safeTag = replace $safeTag "（" "" }}
+      {{ $safeTag = replace $safeTag "）" "" }}
+      <a href="{{ $tagBase }}/#{{ $safeTag }}" class="quiz-tag">
+        <span class="tag-icon"><i class="fa-solid fa-tag"></i></span>{{ . }}
+      </a>
+      {{ end }}
+    {{ end }}
+  </div>
+{{ end }}
+
+  {{ if eq $inline "true" }}
+  <form class="choice-inline">
+    {{ range $index, $label := $labels }}
+    {{ if lt $index (len $options) }}
+    <label class="choice-option-inline">
+      {{ if eq $multiple "true" }}
+      <input type="checkbox" name="{{ $choiceID }}" value="{{ $label }}">
+      {{ else }}
+      <input type="radio" name="{{ $choiceID }}" value="{{ $label }}">
+      {{ end }}
+      <span class="choice-label">{{ $label }}</span>
+    </label>
+    {{ end }}
+    {{ end }}
+  </form>
+  {{ else if eq $concise "true" }}
+  <form class="choice-inline">
+    {{ range $index, $option := $options }}
+    <label class="choice-option-inline">
+      {{ if eq $multiple "true" }}
+      <input type="checkbox" name="{{ $choiceID }}" value="{{ index $labels $index }}">
+      {{ else }}
+      <input type="radio" name="{{ $choiceID }}" value="{{ index $labels $index }}">
+      {{ end }}
+      <span class="choice-label">{{ index $labels $index }}.</span>
+      <span class="choice-text">{{ $option | markdownify }}</span>
+    </label>
+    {{ end }}
+  </form>
+  {{ else }}
+  <form>
+    {{ range $index, $option := $options }}
+    <label class="choice-option">
+      {{ if eq $multiple "true" }}
+      <input type="checkbox" name="{{ $choiceID }}" value="{{ index $labels $index }}">
+      {{ else }}
+      <input type="radio" name="{{ $choiceID }}" value="{{ index $labels $index }}">
+      {{ end }}
+      <span class="choice-label">{{ index $labels $index }}.</span>
+      <span class="choice-text">{{ $option | markdownify }}</span>
+    </label>
+    {{ end }}
+  </form>
+  {{ end }}
+
+  {{ if eq $multiple "true" }}
+  <div class="multiple-choice-hint">
+    <i class="fa-solid fa-circle-info"></i> 本题为多选题，可选择多个答案
+  </div>
+  {{ end }}
+
+  <div class="feedback-area" id="feedback-{{ $choiceID }}"></div>
+  
+  <div class="quiz-actions">
+    <button class="toggle-btn" onclick="checkAndToggleExplanation(this, '{{ $choiceID }}', '{{ $answer }}', {{ $multiple }})">查看答案与解析</button>
+    <button class="collect-btn" onclick="collectQuiz('{{ $choiceID }}', this)" title="收藏此题">
+      <i class="fa-regular fa-bookmark"></i> 收藏
+    </button>
+  </div>
+
+  <div class="explanation" id="explanation-{{ $choiceID }}">
+    <strong>正确答案：<span class="correct-answer-text">{{ $answer }}</span></strong><br>
+    {{ $explanation | markdownify | safeHTML }}
+  </div>
+</div>
+
+{{- if not ($.Page.Scratch.Get "quiz-choice-flag") -}}
+<link rel="stylesheet" href="/css/quiz-common.css">
+<style>
+/* Original styles */
+.choice-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fdfdfd;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+/* Multiple choice hint */
+.multiple-choice-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #e7f3ff;
+  border: 1px solid #b6d4fe;
+  border-radius: 6px;
+  color: #0a58ca;
+  font-size: 0.9em;
+  font-weight: 500;
+  margin: 5px 0;
+}
+
+.multiple-choice-hint i {
+  font-size: 0.85em;
+}
+
+/* Choice Option */
+.choice-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.choice-option:hover {
+  background-color: #f0f7ff;
+  border-color: #80bfff;
+  transform: translateY(-1px);
+}
+
+.choice-option input[type="radio"],
+.choice-option input[type="checkbox"] {
+  margin-right: 12px;
+  transform: scale(1.1);
+  accent-color: #007bff;
+}
+
+.choice-label {
+  font-weight: bold;
+  margin-right: 10px;
+  color: #007bff;
+}
+
+.choice-text {
+  flex: 1;
+  font-size: 1em;
+  color: #333;
+}
+
+.choice-text p {
+  margin: 0;
+}
+
+.choice-text code {
+  color: #c7254e;
+  background-color: #f9f2f4;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* Inline choice styles */
+.choice-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+  justify-content: flex-start;
+}
+
+.choice-option-inline {
+  flex: 1 1 calc(25% - 10px);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 14px;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+  text-align: left;
+}
+
+.choice-option-inline:hover {
+  background-color: #f0f7ff;
+  border-color: #80bfff;
+  transform: translateY(-1px);
+}
+
+.choice-option-inline input[type="radio"],
+.choice-option-inline input[type="checkbox"] {
+  margin-right: 10px;
+  transform: scale(1.1);
+  accent-color: #007bff;
+}
+
+.explanation {
+  display: none;
+  background-color: #e9f5ff;
+  padding: 15px;
+  border-radius: 6px;
+  font-size: 1em;
+  line-height: 1.6;
+  border: 1px solid #b3d7ff;
+  color: #333;
+}
+
+.explanation strong {
+  color: #0056b3;
+  font-weight: 600;
+}
+
+.explanation .correct-answer-text {
+  font-weight: bold;
+  color: #28a745;
+}
+
+.feedback-area {
+  display: none;
+  padding: 10px;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 0.95em;
+}
+
+.feedback-area.correct {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.feedback-area.incorrect {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.feedback-area.no-selection {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.feedback-area.partial {
+  background-color: #cce5ff;
+  color: #004085;
+  border: 1px solid #b8daff;
+}
+
+/* Dark mode adjustments */
+.dark-mode .choice-container {
+  border-color: #444;
+  background-color: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.dark-mode .choice-option,
+.dark-mode .choice-option-inline {
+  background-color: #2a2a2a;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.dark-mode .choice-option:hover,
+.dark-mode .choice-option-inline:hover {
+  background-color: #333;
+  border-color: #666;
+}
+
+.dark-mode .choice-text {
+  color: #e0e0e0;
+}
+
+.dark-mode .explanation {
+  background-color: #2a2a2a;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.dark-mode .multiple-choice-hint {
+  background-color: #1a3c5c;
+  border-color: #2c5282;
+  color: #90cdf4;
+}
+
+/* Eyecare mode adjustments */
+.eyecare-mode .choice-container {
+  border-color: #d0d0d0;
+  background-color: #f8f6f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.eyecare-mode .multiple-choice-hint {
+  background-color: #e8f0fe;
+  border-color: #c6d9fd;
+  color: #2c5282;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .choice-option-inline {
+    flex: 1 1 100%;
+  }
+}
+</style>
+
+<script src="/js/quiz.js" defer></script>
+
+<script>
+// IndexedDB Helper Class
+class QuizDB {
+  constructor() {
+    this.dbName = 'QuizCollectionsDB';
+    this.storeName = 'quizzes';
+    this.db = null;
+  }
+
+  async init() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName);
+
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        this.db = request.result;
+        resolve(this.db);
+      };
+
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(this.storeName)) {
+          const objectStore = db.createObjectStore(this.storeName, { keyPath: 'id' });
+          objectStore.createIndex('collectedAt', 'collectedAt', { unique: false });
+          objectStore.createIndex('tags', 'tags', { unique: false, multiEntry: true });
+        }
+      };
+    });
+  }
+
+  async add(quizData) {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([this.storeName], 'readwrite');
+      const objectStore = transaction.objectStore(this.storeName);
+      const request = objectStore.add(quizData);
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async remove(id) {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([this.storeName], 'readwrite');
+      const objectStore = transaction.objectStore(this.storeName);
+      const request = objectStore.delete(id);
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async get(id) {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([this.storeName], 'readonly');
+      const objectStore = transaction.objectStore(this.storeName);
+      const request = objectStore.get(id);
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAll() {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([this.storeName], 'readonly');
+      const objectStore = transaction.objectStore(this.storeName);
+      const request = objectStore.getAll();
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAllIds() {
+    if (!this.db) await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([this.storeName], 'readonly');
+      const objectStore = transaction.objectStore(this.storeName);
+      const request = objectStore.getAllKeys();
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+}
+
+// Initialize global QuizDB instance
+window.quizDB = new QuizDB();
+
+// 修改：添加多选题支持
+// Modified localStorage helper functions to track verification state
+function saveChoiceToLocalStorage(choiceID, selectedValues, verified = false) {
+  try {
+    const pageUrl = window.location.href;
+    const storageKey = `quizChoices_${btoa(pageUrl)}`;
+    let choices = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    
+    // 如果是多选题，selectedValues 是数组；单选题是单个值
+    const valueToSave = Array.isArray(selectedValues) ? selectedValues.join('') : selectedValues;
+    
+    choices[choiceID] = {
+      value: valueToSave,
+      verified: verified,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(storageKey, JSON.stringify(choices));
+  } catch (error) {
+    console.error('Error saving choice to localStorage:', error);
+  }
+}
+
+function getChoiceFromLocalStorage(choiceID) {
+  try {
+    const pageUrl = window.location.href;
+    const storageKey = `quizChoices_${btoa(pageUrl)}`;
+    const choices = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    return choices[choiceID] || null;
+  } catch (error) {
+    console.error('Error getting choice from localStorage:', error);
+    return null;
+  }
+}
+
+function clearChoiceFromLocalStorage(choiceID) {
+  try {
+    const pageUrl = window.location.href;
+    const storageKey = `quizChoices_${btoa(pageUrl)}`;
+    let choices = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    delete choices[choiceID];
+    localStorage.setItem(storageKey, JSON.stringify(choices));
+  } catch (error) {
+    console.error('Error clearing choice from localStorage:', error);
+  }
+}
+
+// 修改：恢复选择题状态，支持多选题
+function restoreChoices() {
+  document.querySelectorAll('.choice-container').forEach(container => {
+    const choiceID = container.id.replace('quiz-', '');
+    const isMultiple = container.dataset.multiple === 'true';
+    const savedData = getChoiceFromLocalStorage(choiceID);
+    
+    if (savedData && savedData.value) {
+      const savedValue = savedData.value;
+      const inputElements = container.querySelectorAll(`input[name="${choiceID}"]`);
+      
+      if (isMultiple) {
+        // 多选题：savedValue 是字符串，如 "ACD"
+        const selectedValues = savedValue.split('');
+        inputElements.forEach(input => {
+          if (selectedValues.includes(input.value)) {
+            input.checked = true;
+          }
+        });
+      } else {
+        // 单选题
+        const radioInput = container.querySelector(`input[name="${choiceID}"][value="${savedValue}"]`);
+        if (radioInput) {
+          radioInput.checked = true;
+        }
+      }
+      
+      // 如果答案已验证，显示正确/错误状态
+      if (savedData.verified) {
+        const correctAnswer = container.dataset.answer;
+        const options = container.querySelectorAll(`input[name="${choiceID}"]`);
+        
+        // 禁用所有选项并显示正确/错误样式
+        options.forEach(opt => {
+          opt.disabled = true;
+          let optLabel = opt.closest('.choice-option, .choice-option-inline');
+          if (optLabel) {
+            optLabel.style.cursor = 'default';
+            const isCorrectAnswer = isMultiple ? 
+              correctAnswer.includes(opt.value) : 
+              opt.value === correctAnswer;
+            
+            if (isCorrectAnswer) {
+              // 正确答案样式
+              optLabel.style.borderColor = '#28a745';
+              optLabel.style.backgroundColor = '#e6ffed';
+            } else if (opt.checked) {
+              // 选中的错误答案样式
+              optLabel.style.borderColor = '#dc3545';
+              optLabel.style.backgroundColor = '#ffebee';
+            }
+          }
+        });
+        
+        // 恢复反馈消息
+        const feedbackArea = document.getElementById('feedback-' + choiceID);
+        if (feedbackArea) {
+          if (isMultiple) {
+            const selectedValues = Array.from(container.querySelectorAll(`input[name="${choiceID}"]:checked`))
+              .map(input => input.value)
+              .sort()
+              .join('');
+            const correctValues = correctAnswer.split('').sort().join('');
+            
+            if (selectedValues === correctValues) {
+              feedbackArea.textContent = "✅ 你答对了！";
+              feedbackArea.className = 'feedback-area correct';
+            } else {
+              feedbackArea.textContent = `❌ 答错了。正确答案是 ${correctAnswer.split('').join(', ')}。请查看解析。`;
+              feedbackArea.className = 'feedback-area incorrect';
+            }
+          } else {
+            if (savedValue === correctAnswer) {
+              feedbackArea.textContent = "✅ 你答对了！";
+              feedbackArea.className = 'feedback-area correct';
+            } else {
+              feedbackArea.textContent = `❌ 答错了。正确答案是 ${correctAnswer}。请查看解析。`;
+              feedbackArea.className = 'feedback-area incorrect';
+            }
+          }
+          feedbackArea.style.display = 'block';
+        }
+      }
+    }
+  });
+}
+
+// 修改：添加多选题支持
+function checkAndToggleExplanation(button, choiceID, correctAnswer, isMultiple) {
+  isMultiple = isMultiple === 'true';
+  
+  // 获取选中的选项
+  const container = document.getElementById('quiz-' + choiceID);
+  const inputElements = container.querySelectorAll(`input[name="${choiceID}"]`);
+  let selectedValues = [];
+  let hasSelection = false;
+  
+  if (isMultiple) {
+    selectedValues = Array.from(inputElements)
+      .filter(input => input.checked)
+      .map(input => input.value)
+      .sort();
+    hasSelection = selectedValues.length > 0;
+  } else {
+    const selectedOption = container.querySelector(`input[name="${choiceID}"]:checked`);
+    hasSelection = !!selectedOption;
+    if (selectedOption) {
+      selectedValues = [selectedOption.value];
+    }
+  }
+  
+  let feedbackArea = document.getElementById('feedback-' + choiceID);
+  
+  // 如果没有选择选项，显示警告
+  let checkSelect;
+  if (localStorage.getItem('validateSelection') === null) {
+    checkSelect = false;
+  } else {
+    checkSelect = localStorage.getItem('validateSelection') === 'true';
+  }
+  if (!hasSelection && checkSelect) {
+    if (feedbackArea) {
+      feedbackArea.textContent = "⚠️ 请先选择答案选项！";
+      feedbackArea.className = 'feedback-area no-selection';
+      feedbackArea.style.display = 'block';
+    }
+    return; // 不检查答案或显示解析
+  }
+  
+  // 保存选择到 localStorage，标记为已验证
+  saveChoiceToLocalStorage(choiceID, selectedValues, true);
+  
+  // 检查答案正确性
+  checkAnswer(choiceID, selectedValues, correctAnswer, isMultiple);
+  
+  // 切换解析显示
+  var explanation = document.getElementById('explanation-' + choiceID);
+  if (explanation) {
+    explanation.style.display = (explanation.style.display === "none" || explanation.style.display === "") ? "block" : "none";
+    button.textContent = (explanation.style.display === "none" || explanation.style.display === "") ? "查看答案与解析" : "隐藏答案与解析";
+  }
+}
+
+// 修改：添加多选题支持
+function checkAnswer(choiceID, selectedValues, correctAnswer, isMultiple) {
+  const container = document.getElementById('quiz-' + choiceID);
+  const inputElements = container.querySelectorAll(`input[name="${choiceID}"]`);
+  let feedbackArea = document.getElementById('feedback-' + choiceID);
+  
+  // 禁用所有选项
+  inputElements.forEach(opt => {
+    opt.disabled = true;
+    let optLabel = opt.closest('.choice-option, .choice-option-inline');
+    if (optLabel) {
+      optLabel.style.cursor = 'default';
+      
+      if (isMultiple) {
+        // 多选题样式
+        const correctAnswers = correctAnswer.split('');
+        const isCorrect = correctAnswers.includes(opt.value);
+        const isSelected = selectedValues.includes(opt.value);
+        
+        if (isCorrect && isSelected) {
+          // 正确且选中
+          optLabel.style.borderColor = '#28a745';
+          optLabel.style.backgroundColor = '#e6ffed';
+        } else if (isCorrect && !isSelected) {
+          // 正确但未选中
+          optLabel.style.borderColor = '#28a745';
+          optLabel.style.backgroundColor = '#f0fff4';
+        } else if (!isCorrect && isSelected) {
+          // 错误但选中
+          optLabel.style.borderColor = '#dc3545';
+          optLabel.style.backgroundColor = '#ffebee';
+        }
+      } else {
+        // 单选题样式
+        if (opt.value === correctAnswer) {
+          optLabel.style.borderColor = '#28a745';
+          optLabel.style.backgroundColor = '#e6ffed';
+        } else if (opt.checked && opt.value !== correctAnswer) {
+          optLabel.style.borderColor = '#dc3545';
+          optLabel.style.backgroundColor = '#ffebee';
+        }
+      }
+    }
+  });
+
+  if (feedbackArea) {
+    if (isMultiple) {
+      const selectedString = selectedValues.sort().join('');
+      const correctString = correctAnswer.split('').sort().join('');
+      
+      if (selectedString === correctString) {
+        feedbackArea.textContent = "✅ 你答对了！";
+        feedbackArea.className = 'feedback-area correct';
+      } else {
+        // 检查部分正确
+        const correctAnswers = correctAnswer.split('');
+        const correctSelected = selectedValues.filter(v => correctAnswers.includes(v));
+        const incorrectSelected = selectedValues.filter(v => !correctAnswers.includes(v));
+        const missing = correctAnswers.filter(v => !selectedValues.includes(v));
+        
+        if (incorrectSelected.length === 0 && missing.length > 0) {
+          feedbackArea.textContent = `⚠️ 部分正确。正确答案是 ${correctAnswer.split('').join(', ')}。请查看解析。`;
+          feedbackArea.className = 'feedback-area partial';
+        } else {
+          feedbackArea.textContent = `❌ 答错了。正确答案是 ${correctAnswer.split('').join(', ')}。请查看解析。`;
+          feedbackArea.className = 'feedback-area incorrect';
+        }
+      }
+    } else {
+      if (selectedValues.length > 0 && selectedValues[0] === correctAnswer) {
+        feedbackArea.textContent = "✅ 你答对了！";
+        feedbackArea.className = 'feedback-area correct';
+      } else {
+        feedbackArea.textContent = `❌ 答错了。正确答案是 ${correctAnswer}。请查看解析。`;
+        feedbackArea.className = 'feedback-area incorrect';
+      }
+    }
+    feedbackArea.style.display = 'block';
+  }
+}
+
+async function collectQuiz(choiceID, button) {
+  const container = document.getElementById('quiz-' + choiceID);
+  if (!container) return;
+  
+  // Collect question elements in correct order
+  let prev = container.previousElementSibling;
+  const questionElements = [];
+  let quizNum = '';
+  
+  // Traverse backwards to collect all question parts
+  while (prev && prev.tagName !== "H5") {
+    questionElements.unshift(prev); // Add to beginning to maintain order
+    prev = prev.previousElementSibling;
+  }
+  
+  // Get quiz number from H5
+  if (prev && prev.tagName === "H5") {
+    quizNum = prev.innerText.trim();
+  }
+  
+  // Build question content properly
+  const question = questionElements.map(el => {
+    const clone = el.cloneNode(true);
+    clone.querySelectorAll('button, script, style').forEach(node => node.remove());
+    return clone.outerHTML.trim();
+  }).filter(content => content.length > 0);
+  
+  // Extract explanation
+  const explanationEl = container.querySelector('.explanation');
+  let explanation = '';
+  if (explanationEl) {
+    explanation = explanationEl.innerHTML.replace(/<strong>.*?<\/strong><br>/, '').trim();
+  }
+  
+  // 修改选项收集逻辑：检查是否是简洁模式
+  const isConcise = container.querySelector('.choice-inline .choice-option-inline .choice-text') !== null;
+  let options = [];
+  
+  if (isConcise) {
+    // 简洁模式：收集包含内容的选项
+    const optionElements = container.querySelectorAll('.choice-option-inline');
+    options = Array.from(optionElements).map(el => {
+      // 获取选项文本，包括标签和内容
+      const label = el.querySelector('.choice-label')?.textContent || '';
+      const textEl = el.querySelector('.choice-text');
+      const text = textEl ? textEl.innerHTML.trim() : '';
+      return text ? `${label} ${text}` : label;
+    });
+  } else {
+    // 常规模式：收集选项内容
+    const optionElements = container.querySelectorAll('.choice-option .choice-text');
+    options = Array.from(optionElements).map(el => el.innerHTML.trim());
+  }
+  
+  // 如果常规模式没找到，尝试从 inline 模式收集
+  if (options.length === 0) {
+    const optionElements = container.querySelectorAll('.choice-option-inline');
+    options = Array.from(optionElements).map(el => {
+      const label = el.querySelector('.choice-label')?.textContent || '';
+      const textEl = el.querySelector('.choice-text');
+      const text = textEl ? textEl.innerHTML.trim() : '';
+      return text ? `${label} ${text}` : label;
+    });
+  }
+  
+  // Get page URL and deduce subject
+  const pageUrl = container.dataset.pageUrl;
+  const subject = getSubjectFromUrl(pageUrl);
+
+  const isMultiple = container.dataset.multiple === 'true';
+  const quizData = {
+    id: choiceID,
+    quizNumber: quizNum,
+    question: question.length > 0 ? question : ['题目'],
+    questionText: question.map(html => {
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      return temp.textContent.trim();
+    }).join('\n'),
+    options: options, // 现在会包含完整的选项内容
+    answer: container.dataset.answer,
+    explanation: explanation,
+    tags: container.dataset.tags,
+    subject: subject,
+    pageUrl: container.dataset.pageUrl + `/#${quizNum}`,
+    pageTitle: container.dataset.pageTitle + ` 第 ${quizNum} 题`,
+    collectedAt: new Date().toISOString(),
+    multiple: isMultiple
+  };
+  
+  try {
+    const existing = await window.quizDB.get(choiceID);
+    
+    if (existing) {
+      await window.quizDB.remove(choiceID);
+      button.classList.remove('collected');
+      button.innerHTML = '<i class="fa-regular fa-bookmark"></i> 收藏';
+      button.title = '收藏此题';
+      showNotification('已取消收藏');
+    } else {
+      await window.quizDB.add(quizData);
+      button.classList.add('collected');
+      button.innerHTML = '<i class="fa-solid fa-bookmark"></i> 已收藏';
+      button.title = '取消收藏';
+      showNotification('已添加到收藏');
+    }
+  } catch (error) {
+    console.error('Error managing quiz collection:', error);
+    showNotification('操作失败,请重试');
+  }
+}
+
+// 修改：添加多选题支持
+function setupChoiceEventListeners() {
+  document.addEventListener('change', function(e) {
+    if ((e.target.type === 'radio' || e.target.type === 'checkbox') && e.target.name.startsWith('choice-')) {
+      const choiceID = e.target.name;
+      const container = document.getElementById('quiz-' + choiceID);
+      const isMultiple = container && container.dataset.multiple === 'true';
+      
+      if (isMultiple) {
+        // 多选题：收集所有选中的值
+        const selectedValues = Array.from(container.querySelectorAll(`input[name="${choiceID}"]:checked`))
+          .map(input => input.value)
+          .sort();
+        saveChoiceToLocalStorage(choiceID, selectedValues, false);
+      } else {
+        // 单选题
+        const selectedValue = e.target.value;
+        saveChoiceToLocalStorage(choiceID, selectedValue, false);
+      }
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+  try {
+    await window.quizDB.init();
+    const collectedIds = await window.quizDB.getAllIds();
+    
+    document.querySelectorAll('.collect-btn').forEach(button => {
+      const container = button.closest('.choice-container');
+      if (container && collectedIds.includes(container.id.replace('quiz-', ''))) {
+        button.classList.add('collected');
+        button.innerHTML = '<i class="fa-solid fa-bookmark"></i> 已收藏';
+        button.title = '取消收藏';
+      }
+    });
+    
+    // Restore saved choices from localStorage
+    restoreChoices();
+    
+    // Setup event listeners for new choices
+    setupChoiceEventListeners();
+  } catch (error) {
+    console.error('Error initializing quiz collections:', error);
+  }
+});
+
+if (!document.getElementById('quiz-animations')) {
+  const style = document.createElement('style');
+  style.id = 'quiz-animations';
+  style.textContent = `
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+if (typeof window.quizChoiceFlag === 'undefined') {
+  window.quizChoiceFlag = true;
+}
+</script>
+{{- $.Page.Scratch.Set "quiz-choice-flag" true -}}
+{{- end -}}

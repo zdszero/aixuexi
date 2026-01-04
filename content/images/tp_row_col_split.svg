@@ -1,0 +1,141 @@
+<svg viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg">
+  <!-- Title -->
+  <text x="500" y="30" font-size="24" font-weight="bold" text-anchor="middle" fill="#2c3e50">
+    矩阵乘法行列拆分
+  </text>
+  
+  <!-- Matrix A -->
+  <g id="matrix-a">
+    <text x="100" y="80" font-size="18" font-weight="bold" fill="#2c3e50">输入矩阵 A</text>
+    <text x="100" y="100" font-size="14" fill="#7f8c8d">(L, K)</text>
+    
+    <!-- A0 -->
+    <rect x="50" y="120" width="80" height="120" fill="#3498db" stroke="#2c3e50" stroke-width="2"/>
+    <text x="90" y="185" font-size="16" font-weight="bold" fill="white" text-anchor="middle">A₀</text>
+    <text x="90" y="205" font-size="12" fill="white" text-anchor="middle">(L, K/N)</text>
+    
+    <!-- A1 -->
+    <rect x="135" y="120" width="80" height="120" fill="#5dade2" stroke="#2c3e50" stroke-width="2"/>
+    <text x="175" y="185" font-size="16" font-weight="bold" fill="white" text-anchor="middle">A₁</text>
+    <text x="175" y="205" font-size="12" fill="white" text-anchor="middle">(L, K/N)</text>
+    
+    <!-- Dots -->
+    <text x="230" y="180" font-size="20" fill="#2c3e50">...</text>
+    
+    <!-- AN-1 -->
+    <rect x="260" y="120" width="80" height="120" fill="#85c1e9" stroke="#2c3e50" stroke-width="2"/>
+    <text x="300" y="185" font-size="16" font-weight="bold" fill="white" text-anchor="middle">Aₙ₋₁</text>
+    <text x="300" y="205" font-size="12" fill="white" text-anchor="middle">(L, K/N)</text>
+    
+    <!-- Dimension labels -->
+    <text x="180" y="260" font-size="12" fill="#7f8c8d" text-anchor="middle">K (按列拆分)</text>
+    <line x1="50" y1="250" x2="340" y2="250" stroke="#7f8c8d" stroke-width="1" marker-end="url(#arrowhead)"/>
+  </g>
+  
+  <!-- Multiplication symbol -->
+  <text x="380" y="180" font-size="28" font-weight="bold" fill="#e74c3c">×</text>
+  
+  <!-- Matrix B -->
+  <g id="matrix-b">
+    <text x="480" y="80" font-size="18" font-weight="bold" fill="#2c3e50">权重矩阵 B</text>
+    <text x="480" y="100" font-size="14" fill="#7f8c8d">(K, M)</text>
+    
+    <!-- B0 -->
+    <rect x="430" y="120" width="140" height="40" fill="#e74c3c" stroke="#2c3e50" stroke-width="2"/>
+    <text x="500" y="145" font-size="16" font-weight="bold" fill="white" text-anchor="middle">B₀ (K/N, M)</text>
+    
+    <!-- B1 -->
+    <rect x="430" y="165" width="140" height="40" fill="#ec7063" stroke="#2c3e50" stroke-width="2"/>
+    <text x="500" y="190" font-size="16" font-weight="bold" fill="white" text-anchor="middle">B₁ (K/N, M)</text>
+    
+    <!-- Dots -->
+    <text x="500" y="225" font-size="20" fill="#2c3e50" text-anchor="middle">⋮</text>
+    
+    <!-- BN-1 -->
+    <rect x="430" y="235" width="140" height="40" fill="#f1948a" stroke="#2c3e50" stroke-width="2"/>
+    <text x="500" y="260" font-size="16" font-weight="bold" fill="white" text-anchor="middle">Bₙ₋₁ (K/N, M)</text>
+    
+    <!-- Dimension labels -->
+    <text x="410" y="190" font-size="12" fill="#7f8c8d" text-anchor="end">K</text>
+    <text x="410" y="205" font-size="12" fill="#7f8c8d" text-anchor="end">(按行拆分)</text>
+    <line x1="420" y1="120" x2="420" y2="275" stroke="#7f8c8d" stroke-width="1" marker-end="url(#arrowhead)"/>
+  </g>
+  
+  <!-- Equals symbol -->
+  <text x="610" y="180" font-size="28" font-weight="bold" fill="#27ae60">=</text>
+  
+  <!-- Local results C_k -->
+  <g id="local-results">
+    <text x="720" y="80" font-size="18" font-weight="bold" fill="#2c3e50">局部结果 Cₖ</text>
+    <text x="720" y="100" font-size="14" fill="#7f8c8d">(每个都是 L × M)</text>
+    
+    <!-- C0 -->
+    <rect x="660" y="120" width="120" height="40" fill="#9b59b6" stroke="#2c3e50" stroke-width="2"/>
+    <text x="720" y="145" font-size="16" font-weight="bold" fill="white" text-anchor="middle">C₀ = A₀B₀</text>
+    
+    <!-- C1 -->
+    <rect x="660" y="165" width="120" height="40" fill="#af7ac5" stroke="#2c3e50" stroke-width="2"/>
+    <text x="720" y="190" font-size="16" font-weight="bold" fill="white" text-anchor="middle">C₁ = A₁B₁</text>
+    
+    <!-- Dots -->
+    <text x="720" y="225" font-size="20" fill="#2c3e50" text-anchor="middle">⋮</text>
+    
+    <!-- CN-1 -->
+    <rect x="660" y="235" width="120" height="40" fill="#c39bd3" stroke="#2c3e50" stroke-width="2"/>
+    <text x="720" y="260" font-size="16" font-weight="bold" fill="white" text-anchor="middle">Cₙ₋₁ = Aₙ₋₁Bₙ₋₁</text>
+  </g>
+  
+  <!-- All-Reduce operation -->
+  <g id="all-reduce">
+    <rect x="620" y="320" width="200" height="80" fill="#f39c12" stroke="#2c3e50" stroke-width="3" rx="10"/>
+    <text x="720" y="345" font-size="18" font-weight="bold" fill="white" text-anchor="middle">All-Reduce</text>
+    <text x="720" y="370" font-size="14" fill="white" text-anchor="middle">跨设备求和通信</text>
+    <text x="720" y="390" font-size="14" fill="white" text-anchor="middle">Σ Cₖ</text>
+    
+    <!-- Arrows pointing to All-Reduce -->
+    <path d="M 720 275 L 720 320" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowhead)" fill="none"/>
+  </g>
+  
+  <!-- Final result -->
+  <g id="final-result">
+    <rect x="640" y="440" width="160" height="80" fill="#27ae60" stroke="#2c3e50" stroke-width="3" rx="5"/>
+    <text x="720" y="470" font-size="20" font-weight="bold" fill="white" text-anchor="middle">最终结果 C</text>
+    <text x="720" y="495" font-size="16" fill="white" text-anchor="middle">C = Σ Cₖ</text>
+    <text x="720" y="515" font-size="14" fill="white" text-anchor="middle">(L, M)</text>
+    
+    <!-- Arrow from All-Reduce to final result -->
+    <path d="M 720 400 L 720 440" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowhead)" fill="none"/>
+  </g>
+  
+  <!-- Device labels -->
+  <g id="device-labels">
+    <text x="50" y="580" font-size="16" font-weight="bold" fill="#2c3e50">设备分配：</text>
+    
+    <!-- Device 0 -->
+    <rect x="50" y="600" width="180" height="35" fill="#ecf0f1" stroke="#3498db" stroke-width="2" rx="5"/>
+    <text x="140" y="622" font-size="14" fill="#2c3e50" text-anchor="middle">Device 0: A₀, B₀ → C₀</text>
+    
+    <!-- Device 1 -->
+    <rect x="250" y="600" width="180" height="35" fill="#ecf0f1" stroke="#3498db" stroke-width="2" rx="5"/>
+    <text x="340" y="622" font-size="14" fill="#2c3e50" text-anchor="middle">Device 1: A₁, B₁ → C₁</text>
+    
+    <!-- Device N-1 -->
+    <rect x="450" y="600" width="220" height="35" fill="#ecf0f1" stroke="#3498db" stroke-width="2" rx="5"/>
+    <text x="560" y="622" font-size="14" fill="#2c3e50" text-anchor="middle">Device N-1: Aₙ₋₁, Bₙ₋₁ → Cₙ₋₁</text>
+  </g>
+  
+  <!-- Key points -->
+  <g id="key-points">
+    <text x="50" y="665" font-size="14" font-weight="bold" fill="#2c3e50">关键点：</text>
+    <text x="50" y="685" font-size="12" fill="#2c3e50">• A 按列拆分，B 按行拆分，维度匹配</text>
+    <text x="380" y="685" font-size="12" fill="#2c3e50">• 每个设备独立计算局部矩阵乘法</text>
+    <text x="710" y="685" font-size="12" fill="#2c3e50">• All-Reduce 聚合所有局部结果</text>
+  </g>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#7f8c8d"/>
+    </marker>
+  </defs>
+</svg>

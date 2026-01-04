@@ -1,0 +1,29 @@
+/*
+
+Add project-specific definitions of theme variables as well as any additional Bootstrap variables you want to set or override
+
+*/
+
+:root {
+  .navbar-nav .nav-link {
+    --nav-link-color: rgb(255, 255, 255, 0.5);
+  }
+
+  .navbar-brand {
+    --nav-brand-color: white;
+  }
+}
+
+.non-root-url {
+  .navbar, .td-navbar {
+    --bs-navbar-brand-color: white;
+  }
+
+  .navbar-nav .nav-link {
+    --nav-link-color: #303030;
+  }
+
+  .navbar-brand {
+    --nav-brand-color: #326ce5;
+  }
+}

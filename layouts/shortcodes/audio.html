@@ -1,0 +1,42 @@
+<figure class="custom-audio {{ .Get "class" }}">
+  <audio controls preload="{{ .Get "preload" | default "metadata" }}" class="custom-audio-player">
+    {{ with .Get "src" }}<source src="{{ . | relURL }}" type="audio/mpeg">{{ else }}
+    <p>Your browser does not support the audio element.</p>
+    {{ end }}
+  </audio>
+  {{ with .Get "caption" }}<figcaption class="custom-audio-caption">{{ . }}</figcaption>{{ end }}
+</figure>
+
+
+<style>
+.custom-audio-row {
+  display: flex;
+  justify-content: space-between; /* 在行内保持一定的间距 */
+  align-items: center;
+  flex-wrap: wrap; /* 如果屏幕宽度不足，自动换行 */
+  gap: 10px; /* 设置控件之间的间距 */
+}
+
+.custom-audio {
+  flex: 1 1 200px; /* 设置最小宽度为200px，允许根据屏幕自适应 */
+  margin: 10px;
+  text-align: center;
+  background-color: #f7f7f7;
+  border-radius: 8px;
+  padding: 5px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); /* 降低阴影强度 */
+  max-width: 70%;
+}
+
+.custom-audio-player {
+  width: 100%; /* 音频控件占满父元素 */
+  height: 30px; /* 控制音频控件的高度，使其更紧凑 */
+}
+
+.custom-audio-caption {
+  font-size: 0.8em;
+  color: #555;
+  margin-top: 5px; /* 缩小标题与控件间的距离 */
+  font-style: italic;
+}
+</style>
