@@ -4,6 +4,7 @@ type: docs
 weight: 10
 ---
 
+### 流程
 
 Attention 阶段核心包含以下几个数学公式：
 
@@ -20,6 +21,8 @@ Attention 计算可以分为三大部分：
 - 注意力得分计算（attention score）
 - 其他运算：layernorm
 
+### QKV
+
 其中 __gemm__ 的计算量和访存量如下表所示：
 
 | operation | inference FLOPs | params | output shape |
@@ -28,6 +31,8 @@ Attention 计算可以分为三大部分：
 | \(A[B,T,\textcolor{red}{D}] \cdot W_K[\textcolor{red}{D},K,H]\) | \(2BTDKH\) | \(DKH\) | \(K[B,T,K,H]\) |
 | \(A[B,T,\textcolor{red}{D}] \cdot W_V[\textcolor{red}{D},K,H]\) | \(2BTDKH\) | \(DKH\) | \(V[B,T,K,H]\) |
 | \(A[B,T,\textcolor{red}{N,H}] \cdot W_O[\textcolor{red}{N,H},D]\) | \(2BTDNH\) | \(DNH\) | \(\text{Z}[B,T,D]\)|
+
+### Attention Score
 
 其中 __attention score__ 的计算量如下表所示：
 
@@ -74,25 +79,42 @@ s_{ij}=\frac{q_i\cdot k_j}{\sqrt{d_k}},\qquad
 \]
 
 \[
-QK^{T} = \begin{bmatrix}
+\begin{align*}
+QK^{T} &= \begin{bmatrix}
 q_1 \\ q_2 \\ \vdots \\ q_t
 \end{bmatrix}
 \begin{bmatrix}
 k_1^T & k_2^T & \cdots & k_s^T
-\end{bmatrix} =
-\begin{bmatrix}
-q_1 \cdot k_1^T & q_1 \cdot k_2^T & q_1 \cdot k_3^T & q_1 \cdot k_s^T \\
-q_2 \cdot k_1^T & q_2 \cdot k_2^T & q_2 \cdot k_3^T & q_2 \cdot k_s^T \\
-\vdots & \vdots & \ddots & \vdots \\
-q_t \cdot k_1^T & q_t \cdot k_2^T & q_t \cdot k_3^T & q_t \cdot k_s^T \\
-\end{bmatrix}
-\xrightarrow{\text{softmax 逐行归一化}}
+\end{bmatrix} \\
+&= \begin{bmatrix}
+q_1 \cdot k_1^T & q_1 \cdot k_2^T & q_1 \cdot k_3^T & \cdots & q_1 \cdot k_s^T \\
+q_2 \cdot k_1^T & q_2 \cdot k_2^T & q_2 \cdot k_3^T & \cdots & q_2 \cdot k_s^T \\
+\vdots & \vdots & \ddots & \vdots & \vdots \\
+q_t \cdot k_1^T & q_t \cdot k_2^T & q_t \cdot k_3^T & \cdots & q_t \cdot k_s^T
+\end{bmatrix} \\
+&\xrightarrow{\text{softmax 逐行归一化}}
 \begin{bmatrix}
 \alpha_{11} & \alpha_{12} & \cdots & \alpha_{1s}\\
 \alpha_{21} & \alpha_{22} & \cdots & \alpha_{2s}\\
 \vdots & \vdots & \ddots & \vdots \\
 \alpha_{t1} & \alpha_{t2} & \cdots & \alpha_{ts}
 \end{bmatrix}
+\end{align*}
 \]
 
 注意力得分矩阵的 shape 为 \([T, S]\)，行长度就是 query length，列长度就是 kv length，每行就是一个 token 和之前 token 的注意力打分，还需要乘上对应的 \(v\) 向量。再乘以 \(V\) 的时候收缩的维度是在行上，所以 contracting dimension 是 \(S\)。
+
+### 经典习题
+
+prefill 阶段的计算复杂度为什么是 \(O(T^2)\)，难道不能只算最后一个 token 和之前 token 的 attention 么？
+
+{{< solution >}}
+* QKV 输入是 **每层 residual + layernorm 的输出**
+* 旧 token 的 KV 是基于上一层输出算出来的
+* 如果你只看最后一个 token：
+  * 你没有上一层 residual+norm 的输出
+  * 无法计算正确的 KV
+  * 拼接到原 KV 上也不对
+
+所以 **没有保存每层 KV 的情况下，prefill 必须完整计算整个序列**，导致 \(T^2\)。
+{{< /solution >}}
