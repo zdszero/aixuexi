@@ -1,0 +1,23 @@
+digraph ComputationGraph {
+    rankdir=LR;   // 从左到右
+    bgcolor=transparent;
+    node [shape=circle];
+
+    a [label="a"];
+    b [label="b = 5 - 3a"];
+    c [label="c = 2b + 3"];
+    d [label="d = 5b + 6"];
+    e [label="e = 7c + d^2"];
+    f [label="f = 2e"];
+    o [label="o"];
+    g [label="g = 3f - o"];
+
+    a -> b;
+    b -> c;
+    b -> d;
+    c -> e;
+    d -> e;
+    e -> f;
+    f -> g;
+    o -> g;
+}
