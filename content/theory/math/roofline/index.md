@@ -63,7 +63,7 @@ T_{\text{math}} + T_{\text{comms}} \leq 2 \times \max(T_{\text{math}}, T_{\text{
 \end{equation}
 \]
 
-也就是说，算术强度刻画了 “**每字节数据能榨出多少 FLOPs**”。从一阶近似的角度看：
+也就是说，**计算强度** 刻画了 “**每字节数据能榨出多少 FLOPs**”。从一阶近似的角度看：
 
 * 算术强度高 → 计算占主导，\( T_{\text{math}} \gg T_{\text{comms}} \)，算力利用率高；
 * 算术强度低 → 通信占主导，系统花大量时间在搬数据上，FLOPs 难以充分发挥。
@@ -92,6 +92,8 @@ T_{\text{math}} > T_{\text{comms}}
 \end{aligned}
 \]
 
+> 不断增加一个 kernel 的计算量，计算强度不会无限增加，增加到计算访存比后，kernel 进入计算瓶颈
+
 这一视角也是 **Roofline Model** 等性能分析方法的核心基础，用来指导我们在模型结构、算子实现和并行策略上的优化方向。
 
 以 Nvidia A100 80GB 为例来直观说明计算与显存带宽之间的关系。在计算能力方面，A100 在 FP16 / BF16 Tensor Core 精度下的理论峰值约为 **312 TFLOPs**（不考虑 2:4 稀疏带来的额外加速，这也是 Roofline 一般使用的标准）。在内存系统方面，其 **HBM2e 显存带宽约为 1.55 TB/s**。
@@ -104,6 +106,15 @@ T_{\text{math}} > T_{\text{comms}}
 \]
 
 这意味着：只有当算子的算术强度（Arithmetic Intensity）达到或超过约 200 FLOPs/Byte 时，才能真正进入计算受限（compute-bound）区间，从而充分发挥 A100 的峰值算力；否则，性能将主要受限于显存带宽（memory-bound）。
+
+#### 经验估计
+
+- memory bound
+    - 增加计算量，时间基本不变/增加很少
+    - 增加访存量，时间线性增加
+- compute bound
+    - 增加访存量，时间基本不变
+    - 增加计算量，时间线形增加
 
 ### 矩阵乘法
 
