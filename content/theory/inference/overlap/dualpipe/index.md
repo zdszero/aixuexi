@@ -5,7 +5,14 @@ description: DualPipe 实现
 weight: 50
 ---
 
-### operation 策略配置
+### 何时有收益
+
+双流有优势和劣势，只有当 __优势 > 劣势的时候才有收益__
+
+- **优势**：dispatch 和 combine 被计算 overlap 掉的时间
+- **劣势**：计算会裂化
+
+### sglang TBO config
 
 以 deepseek 为例进行介绍：
 

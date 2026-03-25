@@ -1,5 +1,5 @@
 ---
-title: Batching
+title: 静态动态
 type: docs
 description: 组 Batch 的方案
 weight: 10
@@ -76,7 +76,7 @@ step 8: req2 结束
 step 9: req5 加入
 ```
 
----
+#### Paged Attn
 
 **dynamic batching 在没有 paged 机制时为何难以实现？**
 

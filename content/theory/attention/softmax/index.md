@@ -75,3 +75,36 @@ Softmax 具备以下 **特点**：
   - 计算指数：\( e^{-2} \approx 0.1353,\ e^{-1} \approx 0.3679,\ e^{0} = 1 \)
   - 分母和：\( 0.1353 + 0.3679 + 1 = 1.5032 \)
   - 概率：\( [0.0900,\ 0.2447,\ 0.6652] \)
+
+
+### Role
+
+将当前 \(q_t\) 与之前所有的 \(k_i (1 \le i \le t)\) 的相关度进行概率归一。
+
+设输入向量为 \(\mathbf{z} = (z_1, z_2, \dots, z_n) \in \mathbb{R}^n\)，则 softmax 函数定义为：
+
+\[
+\text{softmax}(z_i) = \frac{e^{z_i}}{\sum_{j=1}^{n} e^{z_j}}, \quad i=1,\dots,n
+\]
+
+#### 指数放大效应
+
+令 \( M = \max(z_1,\dots,z_n) \)，则  
+\[
+\text{softmax}(z_i) = \frac{e^{z_i - M}}{\sum_{j=1}^{n} e^{z_j - M}}.
+\]  
+若 \( z_k \) 为最大值且与次大值差距为 \(\delta > 0\)，则分子项 \( e^{z_k - M} = 1\)，次大值对应分子为 \( e^{-\delta} \)。当 \(\delta\) 适度时，\( e^{-\delta} \ll 1\)，导致概率分布 \(\mathbf{p}\) 中 \( p_k \approx 1\)，其余 \( p_j \approx 0\)。  
+即：  
+\[
+\lim_{\delta \to \infty} \frac{1}{1 + (n-1)e^{-\delta}} = 1,
+\]  
+因此 softmax 非线性地放大分数差距，使分布趋近于 one-hot 形式，实现注意力聚焦。
+
+#### 可微性
+
+\(\text{softmax}\) 对各 \( z_j \) 可微。记 \( p_i = \text{softmax}(z_i) \)，则  
+\[
+\frac{\partial p_i}{\partial z_j} = p_i (\delta_{ij} - p_j),
+\]  
+其中 \(\delta_{ij}\) 为 Kronecker delta。  
+梯度表达式连续且光滑，允许通过链式法则反向传播至 \( Q, K, V \) 的参数，实现端到端优化。
