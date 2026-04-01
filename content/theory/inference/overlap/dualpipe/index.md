@@ -30,7 +30,33 @@ yield 在这里的语义是 “让权”，如果一个 microbatch 执行 yield�
 - 对于通信流，dispatch 和 combine 都是使用异步的调用方式，每次当我们在一个 microbatch 中 **launch 完当前阶段所有需要的 kernel 之后** 即可 让权给 另一个 microbatch
     - 这样可以在单流中实现双流的逻辑，通过异步的 dispatch/combine 实现通信流
 
-```python
+{{< tabpane persist=false lang="python" >}}
+{{< tab "Simple" >}}
+return OperationsStrategy(
+    deep_gemm_num_sms=None,
+    tbo_delta_stages=2,
+    operations=[
+        attn0,
+        Yield,
+
+        attn1,
+        Yield,
+
+        dispatch_a,
+        shared,
+        Yield,
+
+        dispatch_b,
+        mlp,
+        combine_a,
+        Yield,
+
+        combine_b,
+        Yield,
+    ],
+)
+{{< /tab >}}
+{{< tab "Complex" >}}
 return OperationsStrategy(
     deep_gemm_num_sms=None,
     tbo_delta_stages=2,
@@ -61,7 +87,8 @@ return OperationsStrategy(
         layer.op_comm_postprocess_layer,#          层后处理通信
     ],
 )
-```
+{{< /tab >}}
+{{< /tabpane >}}
 
 
 在看一下 DeepSeek prefill 阶段的多机 TBO：
@@ -71,49 +98,47 @@ return OperationsStrategy(
 
 {{< tabpane persist=false lang="python" >}}
 {{< tab "Simple" >}}
-def _compute_moe_deepseek_blog_prefill(layer):
-    return OperationsStrategy(
-        deep_gemm_num_sms=total_num_sms - DeepEPConfig.num_sms,
-        tbo_delta_stages=0,
-        operations=[
-            attn,
-            dispatch_a,
-            Yield,
+return OperationsStrategy(
+    deep_gemm_num_sms=total_num_sms - DeepEPConfig.num_sms,
+    tbo_delta_stages=0,
+    operations=[
+        attn,
+        dispatch_a,
+        Yield,
 
-            dispatch_b,
-            mlp,
-            combine_a,
-            Yield,
+        dispatch_b,
+        mlp,
+        combine_a,
+        Yield,
 
-            shared,
-            combine_b,
-        ],
-    )
+        shared,
+        combine_b,
+    ],
+)
 {{< /tab >}}
 {{< tab "Complex" >}}
-def _compute_moe_deepseek_blog_prefill(layer):
-    return OperationsStrategy(
-        deep_gemm_num_sms=total_num_sms - DeepEPConfig.num_sms,
-        tbo_delta_stages=0,
-        operations=[
-            layer.op_comm_prepare_attn,
-            layer.self_attn.op_prepare,
-            layer.self_attn.op_core,
-            layer.op_comm_prepare_mlp,
-            layer.mlp.op_gate,
-            layer.mlp.op_select_experts,
-            layer.mlp.op_dispatch_a,
-            operations.YieldOperation(),
-            layer.mlp.op_dispatch_b,
-            layer.mlp.op_experts,
-            layer.mlp.op_combine_a,
-            operations.YieldOperation(),
-            layer.mlp.op_shared_experts,
-            layer.mlp.op_combine_b,
-            layer.mlp.op_output,
-            layer.op_comm_postprocess_layer,
-        ],
-    )
+return OperationsStrategy(
+    deep_gemm_num_sms=total_num_sms - DeepEPConfig.num_sms,
+    tbo_delta_stages=0,
+    operations=[
+        layer.op_comm_prepare_attn,
+        layer.self_attn.op_prepare,
+        layer.self_attn.op_core,
+        layer.op_comm_prepare_mlp,
+        layer.mlp.op_gate,
+        layer.mlp.op_select_experts,
+        layer.mlp.op_dispatch_a,
+        operations.YieldOperation(),
+        layer.mlp.op_dispatch_b,
+        layer.mlp.op_experts,
+        layer.mlp.op_combine_a,
+        operations.YieldOperation(),
+        layer.mlp.op_shared_experts,
+        layer.mlp.op_combine_b,
+        layer.mlp.op_output,
+        layer.op_comm_postprocess_layer,
+    ],
+)
 {{< /tab >}}
 {{< /tabpane >}}
 
@@ -126,6 +151,16 @@ Low-Latency 模式:
   _a = 提交通信（直接调用 _dispatch_core/_combine_core）
   _b = 等通信完成
 ```
+
+这两者其实不影响整体逻辑：通信 kernel 会在 `_a` 开始 launch，然后再 `_b` 等待结束，并且作为 计算流 和 通信流 的同步点。
+
+假设有两个 microbatch A 和 B，在预填充阶段可能出现以下执行顺序：
+
+```
+A.combine_a → B.dispatch_a → A.combine_b → B.dispatch_b
+```
+
+虽然 `B.dispatch_b` 出现在 `A.combine_a` 与 `A.combine_b` 之间，但这并不影响执行逻辑。因为 `combine_a` 和 `dispatch_a` 本质上是向同一个流提交 kernel 执行的事件，它们决定了 kernel 在流中的执行顺序。实际上，`B.dispatch_b` 必须等待 `A.dispatch_b` 完成后才能开始执行，因为同一个流中的内核必须严格按照提交顺序依次执行。
 
 #### Workflow
 
