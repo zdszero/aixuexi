@@ -128,7 +128,6 @@ Ulysses + SP 对比 TP 的 **优势：**
 - 只有 attention 阶段需要通信
 - KV cache 产生阶段完全本地
 
-
 ### 理论分析
 
 #### 计算通信 overlap
@@ -265,8 +264,32 @@ T_\text{comm} = \frac{\text{Bytes}_\text{comm}}{\text{BW}_\text{eff}} = \frac{2 
 \]
 即当序列长度 \( T \) 与流水线并行度 \( P \) 的比值达到大约 \( 10^3 \) 量级时，计算与通信的重叠才可能实现。
 
+#### 对比 TP
+
+如果通信与计算完全 overlap，ring attention 的理论效率可以接近甚至优于 TP（Tensor Parallel）
+
+- TP 的损耗在于最后的 AllReduce 操作，TP 数量越大，这个损耗越大
+- SP 的损耗在于 **第一轮无法 overlap** 以及 **pipeline 尾部（drain）损耗**
+
+首先把两者抽象成同一个模型：
+
+```
+总时间 = max(计算时间, 通信时间) + 无法 overlap 的部分
+```
+
+
+完美情况下，SP 的额外损耗 ≈ 2 × (一个 chunk 的传输时间)
+
+---
+
+**但前提非常苛刻，而且现实中不容易达到，** 原因在于：
+
+- 在硬件中，通信量大时带宽利用率 > 通信量小时带宽利用率，就像一次大 gemm 的 MFU 优于若干次小 gemm，一次 AllReduce 大于 N 次 hop，这一点在估算时要额外考虑
+- 同样，在 SP 的 Attention 中，如果切得太小，attention compute 不够“重”，导致实际 MFU 不高
+
 ### 方案组合
 
 #### TP + SP
 
 #### USP
+

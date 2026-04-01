@@ -630,10 +630,10 @@ body.dark-mode .svg-container {
     }
     // h5 按照 a)、b)、c) 这样的顺序进行编号
     h5::before {
-        content: "◆ ";
+        content: "• ";
         display: inline;
         visibility: visible;
-        color: #6c757d;;
+        color: #adb5bd;
     }
 }
 

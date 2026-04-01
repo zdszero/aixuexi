@@ -1,5 +1,5 @@
 ---
-title: 缩放因子
+title: scale
 type: docs
 description: scale in quantization
 weight: 10

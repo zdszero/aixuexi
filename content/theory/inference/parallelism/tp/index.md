@@ -1,11 +1,46 @@
 ---
 title: TP
 type: docs
-description: Tensor Parallelism 并行详解
+description: 在分布式模型训练中，张量并行（Tensor Parallelism）是一种将运算拆分到多个 GPU 上的关键技术。其核心思想是将输入矩阵或权重矩阵沿特定维度进行分割，使每个设备仅计算部分结果，最后通过集合通信操作合成最终结果。
+
 weight: 10
 ---
 
-在分布式模型训练中，张量并行（Tensor Parallelism）是一种将运算拆分到多个 GPU 上的关键技术。其核心思想是将输入矩阵或权重矩阵沿特定维度进行分割，使每个设备仅计算部分结果，最后通过集合通信操作合成最终结果。
+### 两个模块
+
+#### Attention 切分
+
+**QKVProj**
+
+qkv_proj：`MergedColumnParallelLinear([hidden_size, q_dim + k_dim + v_dim])`
+
+进行 TP 切分时，`MergedColumnParallelLinear` 内部处理了 KV 切分的一些细节：
+
+- Q
+    - 每个 rank 有 `num_heads / tp_size` 个 q head
+- KV
+    - 如果 `tp_size <= num_kv_heads`，那么每个 rank 有 `num_kv_heads / tp_size` 个 KV head
+    - 如果 `tp_size > num_kv_heads`，那么每个 rank 有 1 个 KV head
+
+```
+self.num_heads = self.total_num_heads // attn_tp_size
+self.num_kv_heads = max(1, self.total_num_kv_heads // attn_tp_size)
+```
+
+{{< svg "/images/qkv_proj_tp_split.svg" "110%" >}}
+
+**Attention**
+
+上一步 QKV Projection 已经为每个 rank 切分好 head 了，这一步直接喂到 Attention kernel 中就可以了。
+
+```
+self.attn = RadixAttention(
+    self.num_heads,
+    self.head_dim,
+    num_kv_heads=self.num_kv_heads,
+    v_head_dim=self.v_head_dim,
+)
+```
 
 ### 通信原语
 

@@ -93,3 +93,36 @@ decode 阶段（逐 token 生成）也有类似现象：
 ...
 ```
 
+### Chunk Attn
+
+设请求总长 \(N\) tokens，chunked_prefill_size = \(C\)，分成 \(\lceil N/C \rceil\) 轮。
+
+第 \(t\) 轮（\(t = 0, 1, ...\)）：
+
+- 前缀长度：\(P_t = \min(tC, N)\)
+- Extend 长度：\(E_t = \min(C, N - P_t)\)
+- 总 seq_len：\(S_t = P_t + E_t\)
+- Query 只包含位置 \([P_t, P_t + E_t)\) 的 token。对于 extend 中的第 \(i\) 个 query token（\(0 \le i < E_t\)），其全局位置为 \(P_t + i\)，attention 输出为：
+
+\[o_i = \frac{\sum_{j=0}^{P_t + i} \exp(q_i \cdot k_j / \sqrt{d}) \cdot v_j}{\sum_{j=0}^{P_t + i} \exp(q_i \cdot k_j / \sqrt{d})}\]
+
+其中 \(k_j, v_j\) 来源分两部分：
+
+\(j \in [0, P_t)\)：从 KV cache 中读取（前几轮已算好）
+\(j \in [P_t, P_t + i]\)：从本轮新计算的 KV 中读取
+
+---
+
+Triton 两阶段公式更明确：
+
+\[o_i^{(1)} = \text{Attn}(q_i, K_{\text{prefix}}, V_{\text{prefix}}) \quad \text{(Stage 1: 全部 prefix，无 mask)}\]
+
+\[o_i^{(2)} = \text{CausalAttn}(q_i, K_{\text{extend}}[:i+1], V_{\text{extend}}[:i+1]) \quad \text{(Stage 2: causal)}\]
+
+\[o_i = \text{OnlineSoftmaxMerge}(o_i^{(1)}, o_i^{(2)})\]
+
+Online softmax merge：
+
+\[m = \max(m_1, m_2)\] \[o_i = \frac{e^{m_1 - m} \cdot l_1 \cdot o_i^{(1)} + e^{m_2 - m} \cdot l_2 \cdot o_i^{(2)}}{e^{m_1 - m} \cdot l_1 + e^{m_2 - m} \cdot l_2}\]
+
+其中 \(m_1, l_1\) 和 \(m_2, l_2\) 分别是两阶段的 log-sum-exp 统计量。

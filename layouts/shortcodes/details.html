@@ -1,88 +1,135 @@
 {{- /* Store initial state setting and summary text */ -}}
 {{- $isOpen := .Get 0 | eq "open" -}}
 {{- $summaryText := .Get (sub (.Params | len) 1) -}}
-
 {{- /* Ensure CSS is loaded only once per page */ -}}
 {{- if not ($.Page.Scratch.Get "elegant-details-style-loaded-flag") -}}
 <style>
 .elegant-detail {
     margin: 20px 0;
-    border: 1px solid #e0e0e0; /* Softer border */
-    border-radius: 8px; /* Slightly more rounded */
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
     background-color: #ffffff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); /* Softer, more diffused shadow */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     transition: box-shadow 0.3s ease-in-out;
 }
-
 .elegant-detail:hover {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
-
 .elegant-summary {
-    font-weight: 600; /* Slightly bolder */
+    font-weight: 600;
     cursor: pointer;
     padding: 15px 20px;
-    background-color: #f7f7f7; /* Lighter, neutral background */
+    background-color: #f7f7f7;
     color: #333;
-    border-radius: 8px 8px 0 0; /* Match detail's top radius */
-    display: flex; /* For aligning icon and text */
-    justify-content: space-between; /* Pushes icon to the right */
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
     transition: background-color 0.2s ease-in-out;
-    position: relative; /* For pseudo-elements if needed directly on summary */
 }
-
 .elegant-summary:hover {
-    background-color: #efefef; /* Subtle hover for summary */
+    background-color: #efefef;
 }
-
-/* Custom animated chevron icon */
 .elegant-summary::after {
-    content: '❯'; /* Chevron right */
+    content: '❯';
     display: inline-block;
     font-size: 0.9em;
-    color: #007acc; /* Accent color for icon */
+    color: #007acc;
     margin-left: 10px;
     transition: transform 0.25s ease-in-out;
     transform-origin: center;
+    flex-shrink: 0;
 }
-
 details[open] > .elegant-summary::after {
-    transform: rotate(90deg); /* Chevron down when open */
+    transform: rotate(90deg);
 }
-
-/* Hide default browser marker */
 .elegant-summary::-webkit-details-marker,
 .elegant-summary::marker {
     display: none;
 }
-
 .elegant-detail-content {
     background-color: #ffffff;
-    padding: 0 20px; /* Initial padding for animation */
     border-radius: 0 0 8px 8px;
-    max-height: 0;
     overflow: hidden;
+    max-height: 0;
     opacity: 0;
-    transition: max-height 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), /* Smoother easing */
-                opacity 0.3s ease-in-out,
-                padding 0.35s ease-in-out;
+    /* 注意：不对 padding 做过渡，避免影响高度计算 */
+    transition: max-height 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),
+                opacity 0.3s ease-in-out;
 }
-
-details[open] > .elegant-detail-content {
+.elegant-detail-content-inner {
     padding: 15px 20px;
-    max-height: 100vh; /* Or a sufficiently large value, like 1000px */
-    opacity: 1;
 }
 </style>
+<script>
+(function() {
+  function initDetails() {
+    document.querySelectorAll('details.elegant-detail').forEach(function(details) {
+      var content = details.querySelector('.elegant-detail-content');
+      if (!content || content._elegantInit) return;
+      content._elegantInit = true;
+
+      function open() {
+        // 先让 details 原生打开（不触发我们的动画），取得真实高度
+        details.open = true;
+        content.style.maxHeight = 'none';
+        var fullHeight = content.scrollHeight;
+        content.style.maxHeight = '0';
+        // 强制 reflow
+        content.offsetHeight; // eslint-disable-line no-unused-expressions
+        content.style.maxHeight = fullHeight + 'px';
+        content.style.opacity = '1';
+      }
+
+      function close() {
+        var fullHeight = content.scrollHeight;
+        content.style.maxHeight = fullHeight + 'px';
+        content.offsetHeight; // reflow
+        content.style.maxHeight = '0';
+        content.style.opacity = '0';
+        content.addEventListener('transitionend', function onEnd() {
+          content.removeEventListener('transitionend', onEnd);
+          if (!details.open) return; // already closed externally
+          details.open = false;
+        }, { once: true });
+      }
+
+      // 页面加载时若初始为 open，直接展开不动画
+      if (details.open) {
+        content.style.maxHeight = 'none';
+        content.style.opacity = '1';
+      }
+
+      details.addEventListener('click', function(e) {
+        // 只响应 summary 的点击
+        if (!e.target.closest('summary')) return;
+        e.preventDefault();
+
+        if (details.open) {
+          close();
+        } else {
+          open();
+        }
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDetails);
+  } else {
+    initDetails();
+  }
+})();
+</script>
 {{- $.Page.Scratch.Set "elegant-details-style-loaded-flag" true -}}
 {{- end -}}
-
-<details class="elegant-detail td-max-width-on-larger-screens" {{ if $isOpen }} open{{ end }}>
+<details class="elegant-detail td-max-width-on-larger-screens"{{ if $isOpen }} open{{ end }}>
     <summary class="elegant-summary">
         {{ $summaryText }}
     </summary>
     <div class="elegant-detail-content">
-        {{ .Inner | markdownify }}
+        <div class="elegant-detail-content-inner">
+            {{ .Inner | markdownify }}
+        </div>
     </div>
 </details>
