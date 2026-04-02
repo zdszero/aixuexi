@@ -125,9 +125,7 @@ index_k_with_scale_buffer_dtype = torch.uint8
 
 #### decode flops
 
-attention 计算量在 decode 阶段线性增长，遵循如下公式：
-
-\[4BTSNH\]
+如果不使用稀疏注意力，attention 计算量在 decode 阶段线性增长为 \(2BTSNH\)
 
 其中：
 - \(B\): batch size
@@ -137,6 +135,10 @@ attention 计算量在 decode 阶段线性增长，遵循如下公式：
 - \(H\): head dim
 
 实现 DSA 之后，当 kv_len 长度超过 2048 的时候，稀疏注意力部分的计算量就不再增长了，但是 indexer 阶段的注意力还是线性增长的，不过这个斜率比较小，因为 \(N=64, H=64\)，这个参数还是比较小的。
+
+假设 window_size 为 \(W = 2048\)，那么 decode 阶段 dsa 每个 step 计算量为：
+
+$4BT \cdot min(S, W) \cdot NH\)
 
 ### TP vs CP
 

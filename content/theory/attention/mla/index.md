@@ -44,8 +44,8 @@ MLA 在这里增加了一个中间步骤：
 
 \[
 \begin{aligned}
-\text{MHA(X)} &= \text{softmax}\left( \frac{QK^{T}}{\sqrt{k}} \right) V \\
-&= \text{softmax}\left( \frac{c_{q} W_{qb} (c_{KV} W_{kb})^T}{\sqrt{k}} \right) c_{KV} W_{vb}
+\text{MHA 路径} &= \text{softmax}\left( \frac{QK^{T}}{\sqrt{k}} \right) V \\
+&= \text{softmax}\left( \frac{c_{q} W_{qb} (c_{KV} W_{kb})^T}{\sqrt{k}} \right) (c_{KV} W_{vb})
 \end{aligned}
 \]
 
@@ -58,9 +58,9 @@ MLA 在这里增加了一个中间步骤：
 
 \[
 \begin{aligned}
-\text{MQA} &= \text{softmax}\left( \frac{QK^{T}}{\sqrt{k}} \right) V \\
+\text{MQA 路径} &= \text{softmax}\left( \frac{QK^{T}}{\sqrt{k}} \right) V \\
 &= \text{softmax}\left( \frac{c_{q} W_{qb} (c_{KV} W_{kb})^T}{\sqrt{k}} \right) c_{KV} W_{vb} \\
-&= \text{softmax}\left( \frac{(c_{q} W_{qb} W_{kb}^T) c_{KV}^T}{\sqrt{k}} \right) c_{KV} W_{vb}
+&= (\text{softmax}\left( \frac{(c_{q} W_{qb} W_{kb}^T) c_{KV}^T}{\sqrt{k}} \right) c_{KV}) W_{vb}
 \end{aligned}
 \]
 
@@ -109,7 +109,35 @@ MLA 在这里增加了一个中间步骤：
 
 {{< svg "/images/mla_absorb.drawio.svg" "80%" >}}
 
-### 流程优化
+### 计算量分析
+
+假设用 \(T\) 表示 q_len，用 \(S\) 表示 kv_len：
+
+\[
+\begin{aligned}
+&\text{MQA 和 MHA 共通的部分} \\
+&\quad \text{flops\_q\_a\_and\_kv\_a}: \quad \text{T} \times 7168 \times (1536 + 512 + 64) \\
+&\quad \text{flops\_qb}: \quad \text{T} \times 1536 \times 128 \times 192 \\
+&\quad \text{flops\_oproj}: \quad \text{T} \times 128 \times 128 \times 7168 \\
+\\
+&\text{MHA 路径} \\
+&\quad \text{flops\_kb}: \quad \text{S} \times 512 \times 128 \times 128 \\
+&\quad \text{flops\_vb}: \quad \text{S} \times 512 \times 128 \times 128 \\
+&\quad \text{flops\_mha}: \quad 128 \times (\text{T} \times \text{S} \times 192 + \text{T} \times \text{S} \times 128) \\
+\\
+&\text{MQA 路径} \\
+&\quad \text{flops\_absorb\_kb}: \quad \text{T} \times 128 \times 128 \times 512 \\
+&\quad \text{flops\_absorb\_vb}: \quad \text{T} \times 128 \times 512 \times 128 \\
+&\quad \text{flops\_mqa}: \quad 128 \times (\text{T} \times \text{S} \times 576 + \text{T} \times \text{S} \times 512)
+\end{aligned}
+\]
+
+再给出定性的差别：
+
+* 在 prefill 阶段，如果用 MQA，除了 attention 的计算量变大 3 倍，其他无差别，因为 prefill 阶段 q_len == kv_len
+* 在 decode 阶段，使用 MQA，attention 计算量虽然变大了，但是由于 decode 阶段 kv_len << q_len，所以 kv_b 的计算量被省下来了
+
+### Workflow
 
 很多人常常被理论（数学层面实现）和代码实现给绕晕，这主要是因为两方面：
 

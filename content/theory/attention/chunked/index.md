@@ -126,3 +126,138 @@ Online softmax merge：
 \[m = \max(m_1, m_2)\] \[o_i = \frac{e^{m_1 - m} \cdot l_1 \cdot o_i^{(1)} + e^{m_2 - m} \cdot l_2 \cdot o_i^{(2)}}{e^{m_1 - m} \cdot l_1 + e^{m_2 - m} \cdot l_2}\]
 
 其中 \(m_1, l_1\) 和 \(m_2, l_2\) 分别是两阶段的 log-sum-exp 统计量。
+
+### Workflow
+
+#### 核心状态变量
+
+Scheduler 维护两个关键状态：
+
+- **`chunked_prefill_size`**：每轮 prefill 最多处理的 token 数，根据 GPU 显存自动设置（如 H100 默认 8192）
+- **`chunked_req`**：当前正在分块处理的请求，**全局至多一个**
+
+#### 每轮调度循环
+
+每一轮调度大致经过以下步骤：
+
+**Step 1：暂存未完成的 chunked request**
+
+```python
+if self.chunked_req is not None:
+    self.stash_chunked_request(self.chunked_req)
+    # 将已计算的 KV 写入 radix tree cache，下一轮可作为 prefix 复用
+```
+
+**Step 2：处理上一轮 prefill batch 中已完成的请求**
+
+上一轮 prefill batch 中，除了 `chunked_req` 以外的请求都已完成 prefill，合并进 `running_batch` 进入 decode 阶段。`chunked_req` 被过滤掉，不进入 decode。
+
+**Step 3：尝试构建新的 prefill batch**
+
+```python
+new_batch = self.get_new_batch_prefill()
+```
+
+**Step 4：prefill 优先于 decode**
+
+```
+if new_batch:     → 执行 prefill
+elif running_batch: → 执行 decode
+else:             → 空闲
+```
+
+**Prefill 始终优先。** 只有没有任何 prefill 工作时才 decode。
+
+#### 构建 Prefill Batch
+
+这是调度的核心，通过 `PrefillAdder` 管理三个独立的 token 预算：
+
+| 预算 | 含义 |
+|------|------|
+| `rem_total_tokens` | KV cache pool 剩余可分配的 slot 数 |
+| `rem_input_tokens` | 本轮 prefill batch 的总 input token 上限（`max_prefill_tokens`） |
+| `rem_chunk_tokens` | chunked prefill 大小限制，即本轮 prefill 最多处理多少 token |
+
+任何一个预算耗尽，就停止添加请求。
+
+##### 3a. 优先继续未完成的 chunked request
+
+```python
+if self.chunked_req is not None:
+    self.chunked_req.init_next_round_input()  # 重新计算 prefix/extend
+    self.chunked_req = adder.add_chunked_req(self.chunked_req)
+```
+
+`init_next_round_input` 会查 radix cache，把上一轮已写入 cache 的 token 识别为 `prefix_indices`（不需要重算），剩余的作为 `extend_input_len`（本轮需要计算的 Q token）。
+
+`add_chunked_req` 的核心逻辑：
+
+```python
+_rem_tokens = min(rem_chunk_tokens, rem_total_tokens)
+truncated = req.extend_input_len > _rem_tokens
+req.set_extend_input_len(min(req.extend_input_len, _rem_tokens))
+req.fill_ids = req.fill_ids[:len(req.prefix_indices) + req.extend_input_len]
+return req if truncated else None  # 还没完就返回 req，完了返回 None
+```
+
+关键细节：**只有请求完全 prefill 完毕时，才预留 `max_new_tokens` 的 decode 空间**。中间 chunk 不预留，避免过早占用 KV cache。
+
+##### 3b. 从等待队列添加新请求
+
+遍历 `waiting_queue`，对每个请求：
+
+1. 查 radix cache 计算可复用的 prefix 长度
+2. 计算需要新算的 `extend_input_len`
+3. 如果 extend 长度在预算内 → 完整加入
+4. 如果超出 `rem_chunk_tokens` → **截断**，成为新的 `chunked_req`
+
+```python
+if input_tokens > self.rem_chunk_tokens:
+    trunc_len = self.rem_chunk_tokens // page_size * page_size  # 对齐到 page
+    req.set_extend_input_len(trunc_len)
+    self.new_chunked_req = req  # 标记为需要后续继续
+```
+
+截断长度必须对齐 `page_size`，且**一轮最多产生一个新的 chunked request**。
+
+#### Mixed Chunked Prefill
+
+当 `enable_mixed_chunk=True` 时，prefill batch 会和当前 decode batch **合并成一个 forward pass**：
+
+```python
+if self.is_mixed_chunk and not self.running_batch.is_empty():
+    self.running_batch.prepare_for_decode()
+    new_batch.mix_with_running(self.running_batch)
+```
+
+此时 `rem_chunk_tokens` 和 `rem_input_tokens` 会预先扣除 decode token 数，给 decode 留出空间。这样 decode 请求不会因为长 prefill 被饿死。
+
+#### 完整生命周期举例
+
+一个 12000 token 的请求，`chunked_prefill_size=4096`，`page_size=16`：
+
+```
+Round 1:
+  - waiting_queue 取出请求
+  - prefix_len=0, extend_len=12000 > 4096 → 截断为 4096
+  - Q=[0:4096], KV=[0:4096]
+  - scheduler.chunked_req = req
+  - 执行 forward，KV 写入 cache
+
+Round 2:
+  - stash_chunked_request: 把 4096 个 KV 写入 radix cache
+  - init_next_round_input: prefix_len=4096, extend_len=7904 > 4096 → 截断为 4096
+  - Q=[4096:8192], KV=[0:8192]（Q attend 到完整 KV）
+  - scheduler.chunked_req = req（还没完）
+  - 可能与 decode batch 混合执行
+
+Round 3:
+  - stash: 8192 个 KV 在 cache 中
+  - init_next_round: prefix_len=8192, extend_len=3808 ≤ 4096 → 不截断
+  - Q=[8192:12000], KV=[0:12000]
+  - add_chunked_req 返回 None → 此时预留 max_new_tokens 空间
+  - scheduler.chunked_req = None（完成）
+
+Round 4:
+  - 该请求进入 running_batch，开始 decode
+```

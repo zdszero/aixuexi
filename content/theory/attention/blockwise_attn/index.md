@@ -396,8 +396,6 @@ A_i &= \sum_{y \in \text{block } i} e^{q_x k_y^T} v_y \quad\text{（向量）}
 >
 > 就可以 **一块一块地 streaming 计算 attention**
 
-#### 代码描述
-
 ```python
 def qk_chunked_attention(query, key_chunks, value_chunks):
     """
