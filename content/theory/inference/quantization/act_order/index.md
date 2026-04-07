@@ -1,11 +1,13 @@
 ---
-title: scale
+title: Act Order
 type: docs
-description: scale in quantization
-weight: 10
+description: activation ordering
+weight: 40
 ---
 
-### group size
+### activation ordering
+
+#### group size
 
 一句话总结核心：
 
@@ -17,7 +19,7 @@ weight: 10
 
 所以是 tensor 中的连续多个数据共用一个 factor，连续的数量就是 group size。
 
-### quant process
+#### quant process
 
 __分组 g_idx 如何确定？__
 
@@ -30,7 +32,7 @@ __分组 g_idx 如何确定？__
 
 所有 expert group_size、分组维度、排列方式都是一样的。
 
-### inference
+#### inference
 
 方案一：**动态索引（最慢）**  
 在计算每一个乘法时，都需要查询一张表（`g_idx`）来确认“第 13 列属于哪个组？它的 Scale 在哪？”。这导致 GPU 的 Tensor Core 无法高效并行。Tensor Core 适合大块数据的连续吞吐，而频繁查表会严重破坏并行性，使性能降至 FP16 的几分之一。
