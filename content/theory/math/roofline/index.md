@@ -120,29 +120,70 @@ T_{\text{math}} > T_{\text{comms}}
 
 来看一个即将成为我们最常用的算法：矩阵乘法（简称 matmul）。  
 记作 \( X * Y \rightarrow Z \)，其中：  
-- \( X \) 的形状为 \( \text{bf16}[B, D] \)  
-- \( Y \) 的形状为 \( \text{bf16}[D, F] \)  
-- \( Z \) 的形状为 \( \text{bf16}[B, F] \)  
+
+- \( X \) 的形状为 \( \text{bf16}[M, K] \)  
+- \( Y \) 的形状为 \( \text{bf16}[K, N] \)  
+- \( Z \) 的形状为 \( \text{bf16}[M, N] \)  
 
 执行该矩阵乘法时，需要：  
-- 加载数据量：\( 2DF + 2BD \) 字节  
-- 浮点运算次数：\( 2BDF \) 次  
-- 写回结果量：\( 2BF \) 字节  
-
-因此：
+- 加载数据量：\( 2MK + 2KN \) 字节  
+- 浮点运算次数：\( 2MNK \) 次  
+- 写回结果量：\( 2KN \) 字节  
 
 \[
-\begin{equation} \text{Intensity}(\text{matmul}) = \frac{2BDF}{2BD + 2DF + 2BF} = \frac{BDF}{BD + DF + BF} \end{equation}
+\begin{aligned}
+\text{计算访存比} &= \frac{MNK}{MN + NK + MK} \\
+&= \frac{NK}{N + \frac{NK}{M} + K}
+\end{aligned}
 \]
 
-这里将问题简化一下，我们假设 \(B\) 相比 \(D\) 和 \(F\) 是一个比较小的值，那么我们可以这样估计 gemm 的计算访存比：
+当 \( M \to \infty \) 时，\( \dfrac{NK}{M} \to 0 \)
 
 \[
-\begin{equation} \frac{BDF}{BD + DF + BF} \approx \frac{BDF}{DF} = B \end{equation}
+\frac{NK}{N + K}
 \]
+
+如果是 FP8 gemm，访存量相当于只有 1/2，那么极限计算访存比为：
 
 \[
-\begin{equation} \text{Intensity}(\text{matmul}) > \text{Intensity}(\text{A100}) \implies B > 200 \end{equation}
+\frac{2NK}{N + K}
 \]
 
-需要注意的是，这里的 \(B\) 并不是 sequence 维度的 batch size，
+### Attention
+
+* \(B\)：batch size
+* \(H\)：num of q heads
+* \(H_{kv}\)：num of kv heads
+* \(G\)：\(\frac{H}{H_{kv}}\)
+* \(T\)：q length
+* \(S\)：kv length
+* \(d_{qk}\)：qk head dim
+* \(d_{v}\)：v head dim
+
+\[
+\begin{aligned}
+\frac{B T S \cdot 2H (d_{qk}+d_v)}{B\left(T H d_{qk} + S H_{kv}(d_{qk}+d_v) + T H d_v\right)}
+&= \frac{B T S \cdot 2H (d_{qk}+d_v)}{B\left(T H (d_{qk}+d_v) + S H_{kv}(d_{qk}+d_v)\right)} \\
+&= \frac{B T S \cdot 2H (d_{qk}+d_v)}{B (d_{qk}+d_v)\left(T H + S H_{kv}\right)} \\
+&= \frac{2 H T S}{T H + S H_{kv}} \\
+&= \frac{2 T S}{T + S \cdot \frac{H_{kv}}{H}} \\
+&= \frac{2 T}{\frac{T}{S} + \frac{H_{kv}}{H}}
+\end{aligned}
+\]
+
+在 prefill 阶段，\(T = S\)，上式可以化简为：
+
+\[
+\frac{2T}{1+G} \sim O(T)
+\]
+
+在 decode 阶段，\(\frac{T}{S}\) 接近于 \(0\)，上式可以化简为：
+
+\[
+\frac{2TH}{H_{kv}} = 2TG \sim O(1)
+\]
+
+所以 prefill 阶段 attention 的计算访存比随着序列长度不断增长而增大，而 decode 阶段计算访存比为一个定值，这也比较直观：
+
+- prefill 阶段计算量复杂度为 \(O(T^2)\)，访存量为 \(O(T)\)
+- decode 阶段每个 step 计算量和访存两都为 \(O(T)\)

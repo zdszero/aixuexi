@@ -1,0 +1,279 @@
+digraph AI_SupplyChain {
+    rankdir=TB;
+    node [shape=box, style=rounded, fontname="Arial"];
+    edge [fontname="Arial", fontsize=10];
+
+    // ========== 材料层 (上游) ==========
+    subgraph cluster_material {
+        label="材料层 (上游)";
+        style=filled;
+        color=lightgrey;
+        
+        Silicon [label="硅晶圆\n(衬底)"];
+        Chemicals [label="特气/光刻胶\n(化学品)"];
+        Substrate_MAT [label="ABF/载板材料\n(三菱/味之素)"];
+        Silicon -> Chemicals [style=invis];
+    }
+
+    // ========== 设计层 ==========
+    subgraph cluster_design {
+        label="设计层 (IP/EDA)";
+        style=filled;
+        color=lightgrey;
+        
+        EDA [label="EDA 工具\n(Synopsys/Cadence)"];
+        IP [label="IP 核\n(ARM/芯原)"];
+        Chip_Design [label="AI 芯片设计\n(NVIDIA/AMD/自研)"];
+        EDA -> Chip_Design;
+        IP -> Chip_Design;
+    }
+
+    // ========== 制造与封装 (中游核心) ==========
+    subgraph cluster_manufacturing {
+        label="制造与封装 (中游核心)";
+        style=filled;
+        color=lightblue;
+
+        subgraph cluster_fab {
+            label="晶圆制造";
+            Fab [label="先进逻辑晶圆\n(TSMC/Samsung)\n[5nm/3nm]"];
+        }
+
+        subgraph cluster_hbm {
+            label="HBM 制造";
+            HBM_Fab [label="DRAM 晶圆\n(SK Hynix/Samsung/Micron)"];
+            TSV [label="TSV 钻孔\n(硅通孔)"];
+            MicroBump [label="微凸块\n(μBump)"];
+            HBM_Stack [label="HBM 堆叠\n(8/12层)"];
+            HBM_Fab -> TSV -> MicroBump -> HBM_Stack;
+        }
+
+        subgraph cluster_advanced_pkg {
+            label="先进封装";
+            CoWoS [label="CoWoS\n(晶圆级封装)\n[当前最大瓶颈]"];
+            SoIC [label="SoIC / 3D Fabric\n(混合键合)"];
+            InFO [label="InFO\n(扇出型封装)"];
+            CoWoS -> SoIC [style=dashed];
+            CoWoS -> InFO [style=dashed];
+        }
+
+        Fab -> CoWoS [label=" 逻辑芯片  "];
+        HBM_Stack -> CoWoS [label=" HBM堆叠 "];
+    }
+
+    // ========== 基板层 ==========
+    subgraph cluster_substrate {
+        label="基板层";
+        style=filled;
+        color=lightgreen;
+        
+        ABF [label="ABF 基板\n(载板)\n[潜在瓶颈]"];
+        BT_Sub [label="BT 基板\n(手机类)"];
+        ABF_Supplier [label="ABF供应商\n(欣兴/南亚/奥特斯)"];
+        ABF_Supplier -> ABF;
+    }
+
+    CoWoS -> ABF;
+
+    // ========== 板卡与系统 ==========
+    subgraph cluster_pcba {
+        label="板卡与系统";
+        style=filled;
+        color=lightyellow;
+        
+        PCB [label="高端 PCB\n(服务器主板)"];
+        Connector [label="连接器\n(高速背板)"];
+        VRM [label="VRM 供电模块\n(多相电源)"];
+        Heatsink [label="散热器/均热板"];
+        PCB -> VRM;
+        PCB -> Connector;
+    }
+
+    ABF -> PCB;
+
+    // ========== 互连与网络 ==========
+    subgraph cluster_interconnect {
+        label="互连与网络";
+        style=filled;
+        color=plum;
+        
+        PCIe [label="PCIe Switch\n(Broadcom)"];
+        NVLink [label="NVLink\n(NVIDIA私有)"];
+        Ethernet [label="以太网交换芯片\n(400G/800G)"];
+        Optical [label="光模块 (CPO/SiPh)"];
+        Retimer [label="Retimer/Redriver"];
+        
+        PCIe -> Retimer;
+        Ethernet -> Optical;
+    }
+
+    GPU [label="GPU / AI ASIC\n(算力核心)"];
+    GPU -> PCIe [style=dotted];
+    GPU -> NVLink [style=dotted];
+    PCIe -> PCB;
+    NVLink -> PCB [style=dashed];
+
+    // ========== 数据中心内部需求（扩展存储后） ==========
+    subgraph cluster_datacenter_infra {
+        label="数据中心基础设施 (内部需求)";
+        style=filled;
+        color=lightcoral;
+
+        // 服务器节点
+        Server_Node [label="GPU 服务器节点\n(8x GPU + CPU)"];
+        
+        // 交换结构
+        TOR_Switch [label="TOR 交换机\n(25G/100G)"];
+        Spine_Switch [label="Spine 交换机\n(400G/800G)"];
+        Management_Switch [label="管理网络\n(1GbE 带外)"];
+        
+        // 供配电
+        PDU [label="机架式 PDU\n(智能配电)"];
+        UPS [label="UPS / 备用电源"];
+        
+        // 散热
+        Cooling_Rack [label="机架级液冷\n(冷板式 / 浸没式)"];
+        CDU [label="冷量分配单元\n(CDU)"];
+        
+        // 监控与管理
+        DCIM [label="DCIM / 运维平台\n(实时监控与调度)"];
+    }
+
+    // ========== 存储子系统（全新扩展） ==========
+    subgraph cluster_storage_subsystem {
+        label="存储子系统 (全栈扩展)";
+        style=filled;
+        color=lightcyan;
+
+        // 存储介质制造（上游）
+        subgraph cluster_storage_media {
+            label="存储介质与部件制造";
+            NAND_Manufacturing [label="3D NAND 闪存\n(铠侠/美光/长江存储)"];
+            SSD_Controller [label="SSD 主控\n(Marvell/Samsung/慧荣)"];
+            SSD_Assembly [label="企业级 SSD\n(NVMe/SAS)\n[高耐久/低延迟]"];
+            NAND_Manufacturing -> SSD_Assembly;
+            SSD_Controller -> SSD_Assembly;
+        }
+
+        // 存储网络与加速层
+        subgraph cluster_storage_network {
+            label="存储网络与加速";
+            Storage_Network [label="存储网络交换机\n(RoCE / FC)"];
+            Storage_Accelerator [label="NVMe-oF 目标器\n(DPU / SmartNIC 加速)"];
+            Storage_Network -> Storage_Accelerator;
+        }
+
+        // 存储软件与池化层
+        subgraph cluster_storage_software {
+            label="存储软件与池化";
+            Parallel_FS [label="并行文件系统\n(Lustre / GPUDirect Storage)"];
+            Storage_Pool [label="NVMe SSD 池\n(全闪阵列 / 分布式)\n[吞吐瓶颈]"];
+            Storage_Pool -> Parallel_FS;
+        }
+
+        // 连接存储内部组件
+        SSD_Assembly -> Storage_Pool;
+        Storage_Accelerator -> Parallel_FS [label=" 硬件加速 "];
+        
+        // 可选扩展：持久内存 & CXL
+        Persistent_Memory [label="持久内存 / CXL\n(内存扩展池)"];
+        Persistent_Memory -> Storage_Pool [style=dashed, label=" 内存语义访问 "];
+    }
+
+    // ========== 原有板卡到服务器节点连接 ==========
+    PCB -> Server_Node;
+    Power_Supply [label="高功率电源"];
+    Power_Supply -> Server_Node;
+    Heatsink -> Server_Node;
+
+    // ========== 存储子系统与服务器 / 网络的连接 ==========
+    // 替代原 Server_Node -> Storage 边
+    Server_Node -> Storage_Accelerator [style=dashed, label=" NVMe-oF / TCP "];
+    Server_Node -> Parallel_FS [style=dotted, label=" 直接数据访问 "];
+    // 存储网络连接到数据中心交换结构
+    Storage_Network -> TOR_Switch [style=dashed, label=" 存储流量分离 "];
+    Storage_Network -> Spine_Switch [style=dashed, label=" 跨机柜存储 "];
+    
+    // 存储子系统输出到数据中心集成
+    Parallel_FS -> DataCenter_Agg [label=" 存储服务接口 "];
+    Storage_Pool -> DataCenter_Agg [style=dotted, label=" 底层资源 "];
+
+    // 连接存储介质制造与上游材料/设计层
+    Silicon -> NAND_Manufacturing [style=dotted, label=" 硅基衬底 "];
+    Chemicals -> NAND_Manufacturing [style=dotted, label=" 特气/光刻胶 "];
+    IP -> SSD_Controller [style=dotted, label=" 主控 IP "];
+    Chip_Design -> SSD_Controller [style=dotted, label=" AI 调度算法 "];
+
+    // 原有服务器节点与内部网络连接（保持）
+    Server_Node -> TOR_Switch;
+    TOR_Switch -> Spine_Switch [label=" 上行 "];
+    Spine_Switch -> Optical [label=" 跨机柜/跨数据中心 "];
+    
+    // 供配电链路
+    Power_Supply -> PDU;
+    PDU -> Server_Node;
+    UPS -> PDU;
+    
+    // 散热链路
+    Cooling_Rack -> Server_Node;
+    CDU -> Cooling_Rack;
+    Cooling_Rack -> Cooling [style=dashed, label=" 循环 "];
+    
+    // 管理网络
+    Management_Switch -> Server_Node [style=dotted];
+    Management_Switch -> DCIM;
+    DCIM -> TOR_Switch [style=dotted];
+    DCIM -> PDU [style=dotted];
+    DCIM -> CDU [style=dotted];
+    DCIM -> Storage_Network [style=dotted, label=" 存储网络监控 "];
+
+    // 原有冷却系统节点（兼容）
+    Cooling [label="液冷系统"];
+    Cooling -> Cooling_Rack [style=dashed];
+
+    // ========== 最终应用 ==========
+    subgraph cluster_downstream {
+        label="最终应用";
+        style=filled;
+        color=wheat;
+        
+        AI_Cloud [label="AI 云计算\n(微软/谷歌/亚马逊)"];
+        Enterprise [label="企业本地部署"];
+        Robotics [label="机器人/自动驾驶"];
+    }
+
+    // 数据中心集成节点（原有）
+    DataCenter_Agg [label="数据中心集成\n(机架/布线/运营)", shape=box, style=rounded];
+    Server_Node -> DataCenter_Agg;
+    // 原 Storage -> DataCenter_Agg 已被 Parallel_FS -> DataCenter_Agg 取代
+    Spine_Switch -> DataCenter_Agg;
+    PDU -> DataCenter_Agg;
+    Cooling_Rack -> DataCenter_Agg;
+    DCIM -> DataCenter_Agg;
+    
+    DataCenter_Agg -> AI_Cloud;
+    DataCenter_Agg -> Enterprise;
+    DataCenter_Agg -> Robotics;
+
+    // ========== 瓶颈标注（保留原注释风格） ==========
+    node [shape=plaintext, fontcolor=red, fontsize=12];
+    // bottleneck1 [label="⚠️ 当前最大卡点"];
+    // bottleneck2 [label="⚠️ 下一个卡点"];
+    // bottleneck3 [label="⚠️ 已开始释放机会"];
+    // bottleneck4 [label="⚠️ 新瓶颈: 网络与散热"];
+
+    // CoWoS -> bottleneck1 [style=invis];
+    // Optical -> bottleneck2 [style=invis];
+    // PCB -> bottleneck3 [style=invis];
+    // Cooling_Rack -> bottleneck4 [style=invis];
+
+    // ========== 跨子图关系（补全） ==========
+    Chip_Design -> Fab;
+    Silicon -> Fab;
+    Chemicals -> Fab;
+    Substrate_MAT -> ABF_Supplier;
+    
+    // 芯片设计到互连
+    Chip_Design -> Ethernet [style=dotted];
+    Chip_Design -> PCIe [style=dotted];
+}

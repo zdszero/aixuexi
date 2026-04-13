@@ -108,13 +108,13 @@ class GQA(nn.Module):
 
         # ---- 4. attention ----
         attn_scores = torch.einsum(
-            "b s h d, b t h d -> b h s t",
+            "b t h d, b s h d -> b h t s",
             q, k
         ) / (d_qk ** 0.5)
 
         if mask is not None:
             out =  torch.einsum(
-                "b h s t, b t h d -> b s h d",
+                "b h t s, b s h d -> b t h d",
                 attn_scores, v
             )
 

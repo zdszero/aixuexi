@@ -74,6 +74,19 @@ Per-group 内还可以细分：
 | mxfp8     | 1      | 4      | 3      | 128（类似 fp8(e4m3)）      |
 | mxfp4     | 1      | 2      | 1      | 32 或 64（类似 fp4(e2m1)） |
 
+---
+
+**mxfp8 和 标准fp8 量化方案的区别**
+
+- scale 格式
+    - mxfp8：e8m0 fp8
+    - fp8: fp32
+- 量化粒度
+    - mxfp8: block quant 1x32，每 32 个元素一个 scale
+    - fp8: block quant 128x128
+
+
+
 ### 量化算法
 
 上面说的是"格式"，还有一个维度是"怎么选 scale"：
