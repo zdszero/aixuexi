@@ -1,5 +1,5 @@
 ---
-title: 复杂系统与演化
+title: GPU
 type: docs
 weight: 10
 ---
